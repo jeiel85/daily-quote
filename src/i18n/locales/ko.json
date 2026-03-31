@@ -35,7 +35,7 @@
     "turn_on": "켜기"
   },
   "auth": {
-    "welcome": "AI Daily Quote",
+    "welcome": "Lumina Daily",
     "desc": "매일 아침, 당신만을 위한 AI의 특별한 명언으로 하루를 시작해보세요.",
     "google_login": "Google로 시작하기"
   },

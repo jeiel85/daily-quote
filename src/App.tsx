@@ -193,15 +193,41 @@ export default function App() {
     }
   };
 
+  // Sync browser notification permission with app state
+  useEffect(() => {
+    const syncPermission = async () => {
+      if (user && 'Notification' in window && Notification.permission === 'granted' && !settings.isSubscribed) {
+        // Silently try to subscribe if permission is already granted
+        const token = await requestNotificationPermission();
+        if (token) {
+          const fcmToken = token === 'granted_but_no_token' ? '' : token;
+          const newSettings = { ...settings, isSubscribed: true, fcmToken };
+          setSettings(newSettings);
+          await setDoc(doc(db, 'users', user.uid), newSettings, { merge: true });
+        }
+      }
+    };
+    syncPermission();
+  }, [user, settings.isSubscribed]);
+
   const handleSubscribe = async () => {
     if (!user) return;
     const token = await requestNotificationPermission();
     if (token) {
-      const newSettings = { ...settings, isSubscribed: true, fcmToken: token };
+      const fcmToken = token === 'granted_but_no_token' ? '' : token;
+      const newSettings = { ...settings, isSubscribed: true, fcmToken };
       setSettings(newSettings);
       await setDoc(doc(db, 'users', user.uid), newSettings, { merge: true });
+      setError(null); // Clear any previous error
     } else {
-      setError(t('settings.status_desc'));
+      // Only show error if permission was actually denied or failed
+      if (Notification.permission === 'denied') {
+        setError(t('settings.status_desc'));
+      } else {
+        // If it's just a token issue but permission is granted, we don't necessarily want a red error toast
+        // but we can inform the user if needed. For now, let's just clear the error if it's not a denial.
+        setError(null);
+      }
     }
   };
 
@@ -231,18 +257,18 @@ export default function App() {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border border-neutral-100"
         >
-          <div className="w-20 h-20 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Sparkles className="w-10 h-10 text-indigo-600" />
+          <div className="w-24 h-24 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-indigo-200">
+            <Sparkles className="w-12 h-12 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-neutral-900 mb-2">{t('auth.welcome')}</h1>
-          <p className="text-neutral-500 mb-8 leading-relaxed">
+          <h1 className="text-4xl font-extrabold tracking-tight text-neutral-900 mb-3 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{t('auth.welcome')}</h1>
+          <p className="text-neutral-500 mb-10 leading-relaxed max-w-[280px] mx-auto">
             {t('auth.desc')}
           </p>
           <button 
             onClick={signInWithGoogle}
             className="w-full py-4 px-6 bg-indigo-600 text-white rounded-2xl font-semibold flex items-center justify-center gap-3 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
           >
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" className="w-5 h-5 bg-white rounded-full p-0.5" alt="Google" />
+            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" className="w-5 h-5 bg-white rounded-full p-0.5" alt="Google" />
             {t('auth.google_login')}
           </button>
         </motion.div>
@@ -253,12 +279,21 @@ export default function App() {
   return (
     <div className="min-h-screen bg-neutral-50 pb-24">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-bottom border-neutral-100 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-6 h-6 text-indigo-600" />
-          <span className="font-bold text-xl text-neutral-900">AI Quote</span>
+      <header className="bg-white/80 backdrop-blur-lg sticky top-0 z-40 border-b border-neutral-100 px-6 py-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100">
+            <Sparkles className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-extrabold text-xl tracking-tight leading-none bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Lumina
+            </span>
+            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mt-1">
+              Daily Wisdom
+            </span>
+          </div>
         </div>
-        <button onClick={logout} className="p-2 text-neutral-400 hover:text-neutral-600 transition-colors">
+        <button onClick={logout} className="p-2.5 bg-neutral-50 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
           <LogOut className="w-5 h-5" />
         </button>
       </header>

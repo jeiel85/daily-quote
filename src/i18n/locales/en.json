@@ -35,7 +35,7 @@
     "turn_on": "Turn On"
   },
   "auth": {
-    "welcome": "AI Daily Quote",
+    "welcome": "Lumina Daily",
     "desc": "Start your day with a special AI quote just for you.",
     "google_login": "Start with Google"
   },

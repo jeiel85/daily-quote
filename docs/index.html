@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Daily Quote Notifier - Landing Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-text {
+            background: linear-gradient(to right, #4f46e5, #9333ea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-neutral-50 text-neutral-900">
+    <div class="max-w-4xl mx-auto px-6 py-20">
+        <header class="text-center mb-20">
+            <div class="w-20 h-20 bg-indigo-100 rounded-3xl flex items-center justify-center mx-auto mb-8">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight">AI Daily <span class="gradient-text">Quote Notifier</span></h1>
+            <p class="text-xl text-neutral-500 max-w-2xl mx-auto leading-relaxed">
+                매일 아침, 당신만을 위한 AI의 특별한 명언과 따뜻한 해설로 하루를 시작해보세요. 
+                PWA 지원으로 모바일에서도 완벽하게 작동합니다.
+            </p>
+        </header>
+
+        <main class="grid md:grid-cols-3 gap-8 mb-20">
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-neutral-100">
+                <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+                </div>
+                <h3 class="text-xl font-bold mb-3">AI 맞춤형 명언</h3>
+                <p class="text-neutral-500 text-sm leading-relaxed">Gemini AI가 당신이 선택한 테마에 맞춰 깊은 통찰력을 담은 명언을 생성합니다.</p>
+            </div>
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-neutral-100">
+                <div class="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9333ea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                </div>
+                <h3 class="text-xl font-bold mb-3">스마트 푸시 알림</h3>
+                <p class="text-neutral-500 text-sm leading-relaxed">원하는 시간에 맞춰 매일 새로운 명언을 브라우저 푸시 알림으로 받아보세요.</p>
+            </div>
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-neutral-100">
+                <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                </div>
+                <h3 class="text-xl font-bold mb-3">다국어 지원</h3>
+                <p class="text-neutral-500 text-sm leading-relaxed">한국어, 영어, 일본어, 중국어 등 4개 국어를 완벽하게 지원합니다.</p>
+            </div>
+        </main>
+
+        <footer class="text-center">
+            <a href="https://ais-dev-zto6zwb4s37sdj3fecke7y-263692129031.asia-east1.run.app" class="inline-flex items-center justify-center px-10 py-5 bg-indigo-600 text-white rounded-full font-bold text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200">
+                앱 실행하기
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </a>
+            <p class="mt-12 text-neutral-400 text-sm">
+                &copy; 2026 AI Daily Quote Notifier. Developed by <a href="https://github.com/jeiel85" class="underline">jeiel85</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

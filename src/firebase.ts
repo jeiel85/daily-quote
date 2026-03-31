@@ -14,14 +14,25 @@ export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
 export const logout = () => signOut(auth);
 
 export const requestNotificationPermission = async () => {
-  if (!messaging) return null;
+  if (!messaging || !('Notification' in window)) {
+    console.warn('Notifications not supported in this browser.');
+    return null;
+  }
+  
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-      const token = await getToken(messaging, {
-        vapidKey: 'YOUR_VAPID_KEY_HERE' // This will be updated later or handled by FCM
-      });
-      return token;
+      // Note: getToken will fail if VAPID key is not configured in Firebase Console
+      // For now, we attempt to get it, but catch the error gracefully
+      try {
+        const token = await getToken(messaging, {
+          // vapidKey: 'YOUR_VAPID_KEY_HERE' // Replace with your actual VAPID key from Firebase Console
+        });
+        return token;
+      } catch (tokenError) {
+        console.error('FCM Token error (Check VAPID key):', tokenError);
+        return 'granted_but_no_token'; // Special state to indicate permission is OK but token failed
+      }
     }
   } catch (error) {
     console.error('Error requesting notification permission:', error);
