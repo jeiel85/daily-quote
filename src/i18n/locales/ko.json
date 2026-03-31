@@ -7,7 +7,10 @@
     "loading": "로딩 중...",
     "error": "오류가 발생했습니다.",
     "error_api_key_missing": "Gemini API 키가 설정되지 않았습니다. 설정에서 API 키를 확인해주세요.",
-    "error_generating_quote": "명언을 생성하는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+    "error_generating_quote": "명언을 생성하는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+    "error_boundary_title": "오류가 발생했습니다.",
+    "error_boundary_desc": "애플리케이션에 예기치 않은 오류가 발생했습니다.",
+    "error_boundary_retry": "다시 시도"
   },
   "home": {
     "title": "오늘의 명언",

@@ -27,7 +27,9 @@ import {
   db, 
   signInWithGoogle, 
   logout, 
-  requestNotificationPermission 
+  requestNotificationPermission,
+  handleFirestoreError,
+  OperationType
 } from './firebase';
 import { 
   onAuthStateChanged, 
@@ -44,10 +46,62 @@ import {
   onSnapshot, 
   addDoc, 
   serverTimestamp,
-  Timestamp
+  Timestamp,
+  getDocFromServer
 } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import './i18n/config';
+import React, { Component, ReactNode } from 'react';
+
+// Error Boundary Component
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  t: any;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: any;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error('ErrorBoundary caught an error', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-50 p-6 text-center">
+          <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 border border-neutral-100">
+            <div className="w-20 h-20 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-10 h-10 text-red-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-neutral-900 mb-2">{this.props.t('common.error_boundary_title')}</h1>
+            <p className="text-neutral-500 mb-8">{this.props.t('common.error_boundary_desc')}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full py-4 px-6 bg-indigo-600 text-white rounded-2xl font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+            >
+              {this.props.t('common.error_boundary_retry')}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // Types
 interface Quote {
@@ -99,6 +153,17 @@ export default function App() {
 
   // Auth Listener
   useEffect(() => {
+    const testConnection = async () => {
+      try {
+        await getDocFromServer(doc(db, 'test', 'connection'));
+      } catch (error) {
+        if(error instanceof Error && error.message.includes('the client is offline')) {
+          console.error("Please check your Firebase configuration. ");
+        }
+      }
+    };
+    testConnection();
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -111,6 +176,7 @@ export default function App() {
   }, []);
 
   const fetchUserSettings = async (uid: string) => {
+    const path = `users/${uid}`;
     try {
       const docRef = doc(db, 'users', uid);
       const docSnap = await getDoc(docRef);
@@ -130,15 +196,17 @@ export default function App() {
           language: i18n.language || 'ko',
           isSubscribed: false,
           updatedAt: serverTimestamp(),
+          role: 'client'
         };
         await setDoc(docRef, initialSettings);
       }
     } catch (err) {
-      console.error('Error fetching settings:', err);
+      handleFirestoreError(err, OperationType.GET, path);
     }
   };
 
   const fetchHistory = (uid: string) => {
+    const path = `users/${uid}/history`;
     const q = query(
       collection(db, 'users', uid, 'history'),
       orderBy('createdAt', 'desc'),
@@ -153,6 +221,8 @@ export default function App() {
       if (quotes.length > 0 && !currentQuote) {
         setCurrentQuote(quotes[0]);
       }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
     });
   };
 
@@ -196,8 +266,13 @@ export default function App() {
       };
 
       // Save to Firestore
-      const docRef = await addDoc(collection(db, 'users', user.uid, 'history'), newQuote);
-      setCurrentQuote({ ...newQuote, id: docRef.id } as Quote);
+      const path = `users/${user.uid}/history`;
+      try {
+        const docRef = await addDoc(collection(db, 'users', user.uid, 'history'), newQuote);
+        setCurrentQuote({ ...newQuote, id: docRef.id } as Quote);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.CREATE, path);
+      }
     } catch (err) {
       console.error('Error generating quote:', err);
       setError(t('common.error_generating_quote'));
@@ -225,13 +300,18 @@ export default function App() {
 
   const handleSubscribe = async () => {
     if (!user) return;
+    const path = `users/${user.uid}`;
     const token = await requestNotificationPermission();
     if (token) {
       const fcmToken = token === 'granted_but_no_token' ? '' : token;
       const newSettings = { ...settings, isSubscribed: true, fcmToken };
       setSettings(newSettings);
-      await setDoc(doc(db, 'users', user.uid), newSettings, { merge: true });
-      setError(null); // Clear any previous error
+      try {
+        await setDoc(doc(db, 'users', user.uid), newSettings, { merge: true });
+        setError(null); // Clear any previous error
+      } catch (err) {
+        handleFirestoreError(err, OperationType.UPDATE, path);
+      }
     } else {
       // Only show error if permission was actually denied or failed
       if (Notification.permission === 'denied') {
@@ -246,12 +326,17 @@ export default function App() {
 
   const saveSettings = async (updates: Partial<UserSettings>) => {
     if (!user) return;
+    const path = `users/${user.uid}`;
     const newSettings = { ...settings, ...updates };
     setSettings(newSettings);
     if (updates.language) {
       i18n.changeLanguage(updates.language);
     }
-    await setDoc(doc(db, 'users', user.uid), newSettings, { merge: true });
+    try {
+      await setDoc(doc(db, 'users', user.uid), newSettings, { merge: true });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, path);
+    }
   };
 
   if (loading) {
@@ -290,7 +375,8 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 pb-24">
+    <ErrorBoundary t={t}>
+      <div className="min-h-screen bg-neutral-50 pb-24">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-lg sticky top-0 z-40 border-b border-neutral-100 px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -586,5 +672,6 @@ export default function App() {
         )}
       </AnimatePresence>
     </div>
+    </ErrorBoundary>
   );
 }

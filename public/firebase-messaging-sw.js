@@ -8,7 +8,7 @@ importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compa
 // Note: These values should be provided at build time or via environment variables
 // For GitHub security, we use placeholders for sensitive values.
 firebase.initializeApp({
-  apiKey: "REPLACE_WITH_YOUR_FIREBASE_API_KEY",
+  apiKey: "AIzaSyDwj48xtxWNK4b2ejOBediztjgHZjJ2iAY",
   authDomain: "spheric-shield-487302-a2.firebaseapp.com",
   projectId: "spheric-shield-487302-a2",
   storageBucket: "spheric-shield-487302-a2.firebasestorage.app",

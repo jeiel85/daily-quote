@@ -7,7 +7,10 @@
     "loading": "Loading...",
     "error": "An error occurred.",
     "error_api_key_missing": "Gemini API key is missing. Please check your API key in settings.",
-    "error_generating_quote": "An error occurred while generating the quote. Please try again later."
+    "error_generating_quote": "An error occurred while generating the quote. Please try again later.",
+    "error_boundary_title": "An error occurred.",
+    "error_boundary_desc": "An unexpected error occurred in the application.",
+    "error_boundary_retry": "Retry"
   },
   "home": {
     "title": "Today's Quote",
