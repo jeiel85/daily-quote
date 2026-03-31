@@ -1,0 +1,48 @@
+{
+  "common": {
+    "home": "首页",
+    "history": "历史",
+    "settings": "设置",
+    "logout": "注销",
+    "loading": "加载中...",
+    "error": "发生错误。"
+  },
+  "home": {
+    "title": "今日名言",
+    "ai_explanation": "AI 解说",
+    "no_quote": "尚未生成名言。",
+    "generate_first": "生成第一条名言",
+    "refresh": "刷新",
+    "notification_at": "{{time}} 通知",
+    "subscribe_title": "获取每日通知",
+    "subscribe_desc": "在指定时间为您发送名言。",
+    "activate": "激活"
+  },
+  "history": {
+    "title": "过去的名言",
+    "just_now": "刚刚"
+  },
+  "settings": {
+    "title": "设置",
+    "notification_time": "通知时间",
+    "notification_desc": "名言将在每天此时间到达。",
+    "theme": "名言主题",
+    "language": "语言设置",
+    "status": "通知状态",
+    "status_desc": "浏览器推送通知状态",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "turn_on": "开启"
+  },
+  "auth": {
+    "welcome": "AI Daily Quote",
+    "desc": "每天早晨，用专为您打造的 AI 特别名言开启新的一天。",
+    "google_login": "使用 Google 开始"
+  },
+  "themes": {
+    "motivation": "动力",
+    "comfort": "慰藉",
+    "humor": "幽默",
+    "success": "成功"
+  }
+}

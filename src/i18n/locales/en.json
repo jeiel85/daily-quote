@@ -1,0 +1,48 @@
+{
+  "common": {
+    "home": "Home",
+    "history": "History",
+    "settings": "Settings",
+    "logout": "Logout",
+    "loading": "Loading...",
+    "error": "An error occurred."
+  },
+  "home": {
+    "title": "Today's Quote",
+    "ai_explanation": "AI Explanation",
+    "no_quote": "No quotes generated yet.",
+    "generate_first": "Generate First Quote",
+    "refresh": "Refresh",
+    "notification_at": "Alert at {{time}}",
+    "subscribe_title": "Get Daily Alerts",
+    "subscribe_desc": "We'll send a quote at your chosen time.",
+    "activate": "Activate"
+  },
+  "history": {
+    "title": "Past Quotes",
+    "just_now": "Just now"
+  },
+  "settings": {
+    "title": "Settings",
+    "notification_time": "Notification Time",
+    "notification_desc": "Quotes arrive daily at this time.",
+    "theme": "Quote Theme",
+    "language": "Language",
+    "status": "Notification Status",
+    "status_desc": "Browser push notification status",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "turn_on": "Turn On"
+  },
+  "auth": {
+    "welcome": "AI Daily Quote",
+    "desc": "Start your day with a special AI quote just for you.",
+    "google_login": "Start with Google"
+  },
+  "themes": {
+    "motivation": "Motivation",
+    "comfort": "Comfort",
+    "humor": "Humor",
+    "success": "Success"
+  }
+}

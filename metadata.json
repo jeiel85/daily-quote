@@ -1,0 +1,5 @@
+{
+  "name": "AI Daily Quote Notifier",
+  "description": "AI-powered personalized daily quotes with PWA push notifications.",
+  "requestFramePermissions": []
+}

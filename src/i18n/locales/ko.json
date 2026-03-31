@@ -1,0 +1,48 @@
+{
+  "common": {
+    "home": "홈",
+    "history": "기록",
+    "settings": "설정",
+    "logout": "로그아웃",
+    "loading": "로딩 중...",
+    "error": "오류가 발생했습니다."
+  },
+  "home": {
+    "title": "오늘의 명언",
+    "ai_explanation": "AI 해설",
+    "no_quote": "아직 생성된 명언이 없습니다.",
+    "generate_first": "첫 명언 생성하기",
+    "refresh": "새로고침",
+    "notification_at": "{{time}} 알림",
+    "subscribe_title": "매일 알림 받기",
+    "subscribe_desc": "지정한 시간에 명언을 보내드려요.",
+    "activate": "활성화"
+  },
+  "history": {
+    "title": "지난 명언들",
+    "just_now": "방금 전"
+  },
+  "settings": {
+    "title": "설정",
+    "notification_time": "알림 시간",
+    "notification_desc": "매일 이 시간에 명언이 도착합니다.",
+    "theme": "명언 테마",
+    "language": "언어 설정",
+    "status": "알림 상태",
+    "status_desc": "브라우저 푸시 알림 상태",
+    "enabled": "활성화됨",
+    "disabled": "비활성화됨",
+    "turn_on": "켜기"
+  },
+  "auth": {
+    "welcome": "AI Daily Quote",
+    "desc": "매일 아침, 당신만을 위한 AI의 특별한 명언으로 하루를 시작해보세요.",
+    "google_login": "Google로 시작하기"
+  },
+  "themes": {
+    "motivation": "동기부여",
+    "comfort": "위로",
+    "humor": "유머",
+    "success": "성공"
+  }
+}
