@@ -9,35 +9,36 @@
 ## 🌟 주요 특징 (Key Features)
 
 ### 📲 모바일 앱 (Porting Completed)
-- **완위 네이티브 경험**: Expo와 Android Native를 결합한 최고의 퍼포먼스.
+- **네이티브 경험**: Expo와 Android Native를 결합한 최고의 퍼포먼스.
 - **오프라인 번들링**: 네트워크 환경과 관계없이 안정적이고 빠른 실행 속도 보장.
 - **프리미엄 UI/UX**: 웹 버전의 감성을 유지하면서 모바일의 편리함(하단 탭, 알림)을 더한 디자인.
-- **맞춤형 빌드 자동화**: 개발자와 사용자를 위한 전용 자동 빌드/설치 스크립트(`build_and_install.bat`) 제공.
-
-### 🧠 지능형 지혜 큐레이션
-- **AI-Powered Insights**: Google Gemini 가 단순히 명언을 찾는 것을 넘어, 그 속에 담긴 '지혜의 깊이'를 성찰할 수 있는 해설을 생성합니다.
-- **Dynamic Imagery**: 문구의 정서에 최적화된 배경 이미지를 실시간으로 생성하여 시각적 몰입감을 더합니다.
-
-### 🌐 글로벌 대응
-- **4개 국어 지원**: 한국어, English, 日本語, 中文을 실시간으로 전환하여 이용 가능합니다.
-
-### 💌 지혜 배달 (Notifications)
-- **Daily Notification**: 사용자가 원하는 시간에 맞춰 매일 신선한 지혜의 메시지를 푸시 알림으로 전달합니다.
+- **맞춤형 빌드 자동화**: 전용 자동 빌드/설치 스크립트(`build_and_install.bat`) 제공.
 
 ---
 
 ## 🛠 기술 스택 (Tech Stack)
 
 ### **Frontend & Mobile**
-- **Mobile**: `React Native`, `Expo (Bare Workflow)`
-- **Web**: `Next.js`, `React`
-- **Styling**: `Vanilla CSS`, `React Native StyleSheet` (Neutral-50 Design System)
-- **Icons**: `Lucide React (Native)`
+![React Native](https://img.shields.io/badge/react_native-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![Expo](https://img.shields.io/badge/expo-000020?style=for-the-badge&logo=expo&logoColor=white)
+![Next.js](https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
+![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
+![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
 
 ### **Backend & Infrastructure**
-- **Authentication**: `Firebase Auth` (Anonymous Login support)
-- **Database**: `Cloud Firestore` (History & Settings persistence)
-- **Generative AI**: `Google Gemini SDK` (Text-to-Wisdom & Theme-to-Image)
+![Firebase](https://img.shields.io/badge/firebase-%23039BE5.svg?style=for-the-badge&logo=firebase)
+![Google Gemini](https://img.shields.io/badge/Google%20Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)
+![Android Studio](https://img.shields.io/badge/Android_Studio-3DDC84?style=for-the-badge&logo=android-studio&logoColor=white)
+
+---
+
+## 🧠 지능형 지혜 큐레이션
+- **AI-Powered Insights**: Google Gemini 가 단순히 명언을 찾는 것을 넘어, 그 속에 담긴 '지혜의 깊이'를 성찰할 수 있는 해설을 생성합니다.
+- **Dynamic Imagery**: 문구의 정서에 최적화된 배경 이미지를 실시간으로 생성하여 시각적 몰입감을 더합니다.
+
+## 🌐 글로벌 대응
+- **4개 국어 지원**: 한국어, English, 日本語, 中文을 실시간으로 전환하여 이용 가능합니다.
 
 ---
 
