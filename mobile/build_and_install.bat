@@ -9,10 +9,16 @@ echo.
 :: Project Path
 cd /d D:\Project\lumina-daily\mobile
 
-set ADB="C:\Users\jeiel\AppData\Local\Android\Sdk\platform-tools\adb.exe"
-:: Update Fallback IP based on current connection
+:: Set Android SDK Path
+set ANDROID_HOME=C:\Users\jeiel\AppData\Local\Android\Sdk
+set PATH=%PATH%;%ANDROID_HOME%\platform-tools;%ANDROID_HOME%\build-tools\35.0.0
+set ADB="%ANDROID_HOME%\platform-tools\adb.exe"
+
 set FALLBACK_DEVICE=192.168.45.149:5555
 set TARGET_DEVICE=
+
+:: Create local.properties if not exists
+echo sdk.dir=C:/Users/jeiel/AppData/Local/Android/Sdk > android/local.properties
 
 if not exist %ADB% (
     echo ERROR: adb.exe not found at %ADB%
