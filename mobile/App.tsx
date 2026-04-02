@@ -62,9 +62,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const { width } = Dimensions.get('window');
 
 const APP_THEMES: any = {
-  white: { bg: '#FFFFFF', text: '#1E293B', subText: '#64748B', accent: '#6366F1', card: '#F8FAFC', light: true, border: '#E2E8F0' },
-  dark: { bg: '#0F172A', text: '#F1F5F9', subText: '#94A3B8', accent: '#818CF8', card: '#1E293B', light: false, border: '#334155' },
-  material: { bg: '#FDF7FF', text: '#1D1B1E', subText: '#49454E', accent: '#6750A4', card: '#F3EDF7', light: true, border: '#E8E0EB' },
+  white: { bg: '#FFFFFF', text: '#0F172A', subText: '#64748B', accent: '#6366F1', card: '#F8FAFC', light: true, border: '#E2E8F0', btnBg: '#F1F5F9' },
+  dark: { bg: '#0F172A', text: '#F1F5F9', subText: '#94A3B8', accent: '#818CF8', card: '#1E293B', light: false, border: '#334155', btnBg: '#334155' },
+  material: { bg: '#FDF7FF', text: '#1D1B1E', subText: '#49454E', accent: '#6750A4', card: '#F3EDF7', light: true, border: '#E8E0EB', btnBg: '#EADDFF' },
 };
 
 const TRANSLATIONS: any = {
@@ -72,20 +72,20 @@ const TRANSLATIONS: any = {
     home: '홈', history: '기록', settings: '설정', refresh: '새 지혜', share: '카드 저장 및 공유',
     subscribe: '지혜 배달 신청', subscribed: '신청됨', explanation: '지혜의 깊이', authorSuffix: 'Lumina',
     wisdomDesc: '매일 당신을 채우는 지혜 한 조각', noHistory: '아직 저장된 지혜가 없습니다.',
-    settingsTitle: '설정', category: '카테고리', language: '언어', appTheme: '앱 테마',
+    settingsTitle: '설정', category: '명언 종류', language: '언어', appTheme: '앱 테마',
     cat_motivation: '동기부여', cat_comfort: '위로', cat_humor: '유머', cat_success: '성공', cat_love: '사랑', cat_calm: '평온', cat_growth: '성장', cat_leadership: '리더십',
     loginAnonymously: '익명으로 시작하기', loginGoogle: '구글로 계속하기', logout: '로그아웃',
-    errorTitle: '오류 발생', errorMsg: '알 수 없는 네트워크 오류', loading: '지혜를 불러오는 중...',
+    errorTitle: '오류 발생', errorMsg: '네트워크 환경이나 API 설정을 확인해 주세요.', loading: '지혜를 불러오는 중...',
     notificationTime: '배달 시간 설정', notificationDesc: '선택하신 시간에 지혜가 배달됩니다.'
   },
   en: {
-    home: 'Home', history: 'History', settings: 'Settings', refresh: 'Refresh', share: 'Save & Share Card',
+    home: 'Home', history: 'History', settings: 'Settings', refresh: 'Refresh', share: 'Save & Share',
     subscribe: 'Daily Wisdom', subscribed: 'Subscribed', explanation: 'Depth of Wisdom', authorSuffix: 'Lumina',
     wisdomDesc: 'A piece of wisdom for your day', noHistory: 'No history yet.',
     settingsTitle: 'Settings', category: 'Category', language: 'Language', appTheme: 'App Theme',
     cat_motivation: 'Motivation', cat_comfort: 'Comfort', cat_humor: 'Humor', cat_success: 'Success', cat_love: 'Love', cat_calm: 'Calm', cat_growth: 'Growth', cat_leadership: 'Leadership',
     loginAnonymously: 'Start Anonymously', loginGoogle: 'Sign in with Google', logout: 'Log Out',
-    errorTitle: 'Error Detected', errorMsg: 'Network or API error occurred.', loading: 'Fetching wisdom...',
+    errorTitle: 'Error', errorMsg: 'Check network or API settings.', loading: 'Fetching wisdom...',
     notificationTime: 'Set Time', notificationDesc: 'Wisdom will be delivered at your time.'
   },
   ja: {
@@ -93,9 +93,9 @@ const TRANSLATIONS: any = {
     subscribe: '毎日智慧をお届け', subscribed: '購読中', explanation: '智慧の深み', authorSuffix: 'Lumina',
     wisdomDesc: 'あなたの毎日を彩る智慧のひとかけら', noHistory: '履歴はありません。',
     settingsTitle: '設定', category: 'カテゴリー', language: '言語', appTheme: 'アプリテーマ',
-    cat_motivation: 'モチベーション', cat_comfort: '癒やし', cat_humor: 'ユー모ア', cat_success: '成功', cat_love: '愛', cat_calm: '静寂', cat_growth: '成長', cat_leadership: 'リーダーシップ',
+    cat_motivation: 'モチベーション', cat_comfort: '癒やし', cat_humor: 'ユー모아', cat_success: '成功', cat_love: '愛', cat_calm: '静寂', cat_growth: '成長', cat_leadership: 'リーダーシップ',
     loginAnonymously: '匿名で開始', loginGoogle: 'Googleで続行', logout: 'ログアウト',
-    errorTitle: 'エラー', errorMsg: '読み込みに失敗しました。', loading: '智慧を読み込み中...',
+    errorTitle: 'エラー', errorMsg: '失敗しました。', loading: '智慧を読み込み中...',
     notificationTime: '時間設定', notificationDesc: '選択した時間に智慧を配達します。'
   },
   zh: {
@@ -104,13 +104,13 @@ const TRANSLATIONS: any = {
     wisdomDesc: '为您带来每天的智慧启迪', noHistory: '尚无记录。',
     settingsTitle: '设置', category: '分类', language: '语言', appTheme: '应用主题',
     cat_motivation: '动力', cat_comfort: '安慰', cat_humor: '幽默', cat_success: '成功', cat_love: '爱', cat_calm: '平静', cat_growth: '成长', cat_leadership: '领导力',
-    loginAnonymously: '以匿名身份开始', loginGoogle: '使用 Google 登录', logout: '登出',
+    loginAnonymously: '匿名登录', loginGoogle: '使用 Google 登录', logout: '登출',
     errorTitle: '发生错误', errorMsg: '网络或 API 错误。', loading: '正在获取智慧...',
     notificationTime: '设置时间', notificationDesc: '系统将在指定时间推送智慧。'
   }
 };
 
-const THEMES_LIST = [
+const CATEGORIES_LIST = [
   { id: 'motivation', icon: '🔥' }, { id: 'comfort', icon: '🌿' },
   { id: 'humor', icon: '😄' }, { id: 'success', icon: '🏆' },
   { id: 'love', icon: '❤️' }, { id: 'calm', icon: '🧘' },
@@ -118,7 +118,7 @@ const THEMES_LIST = [
 ];
 
 export default function App() {
-  const systemColorScheme = useColorScheme();
+  const sysScheme = useColorScheme();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'home' | 'history' | 'settings'>('home');
@@ -127,7 +127,7 @@ export default function App() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [isNotified, setIsNotified] = useState(false);
   const [history, setHistory] = useState<Quote[]>([]);
-  const [theme, setTheme] = useState('motivation'); 
+  const [theme, setTheme] = useState('motivation'); // Content theme
   const [appTheme, setAppTheme] = useState('system'); // white, dark, system, material
   const [language, setLanguage] = useState('ko');
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -136,12 +136,11 @@ export default function App() {
   const viewRef = useRef(null);
   const t = (key: string) => TRANSLATIONS[language]?.[key] || TRANSLATIONS.en[key] || key;
 
-  // Resolve current visual theme based on selection
   const currentVisualTheme = appTheme === 'system' 
-    ? (systemColorScheme === 'dark' ? APP_THEMES.dark : APP_THEMES.white)
+    ? (sysScheme === 'dark' ? APP_THEMES.dark : APP_THEMES.white)
     : (APP_THEMES[appTheme] || APP_THEMES.white);
 
-  // Google Login Integration
+  // Google Provider check
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId: "DUMMY_ID.apps.googleusercontent.com",
     webClientId: "DUMMY_ID.apps.googleusercontent.com",
@@ -193,7 +192,6 @@ export default function App() {
       setQuote(finalQuote);
       if (user) await addDoc(collection(db, 'users', user.uid, 'history'), { ...finalQuote, createdAt: serverTimestamp(), theme });
     } catch (error: any) {
-      console.error(error);
       Alert.alert(t('errorTitle'), `${t('errorMsg')}\n\n[Details]\n${error.message}`);
     } finally { setIsGenerating(false); }
   };
@@ -211,7 +209,7 @@ export default function App() {
           if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri);
         }
       } catch (error) { Alert.alert('Error', 'Save failed.'); } finally { setIsCapturing(false); }
-    }, 100);
+    }, 150);
   };
 
   const renderBackground = () => {
@@ -278,11 +276,11 @@ export default function App() {
               <View style={styles.gridActions}>
                 <TouchableOpacity style={[styles.gridActionItem, { backgroundColor: currentVisualTheme.card, borderColor: currentVisualTheme.border }]} onPress={handleGenerate} disabled={isGenerating}>
                   <RefreshCw color={currentVisualTheme.accent} size={24} style={isGenerating && { opacity: 0.5 }} />
-                  <Text style={[styles.gridActionLabel, { color: currentVisualTheme.subText }]}>{t('refresh')}</Text>
+                  <Text style={[styles.gridActionLabel, { color: currentVisualTheme.text }]}>{t('refresh')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.gridActionItem, { backgroundColor: currentVisualTheme.card, borderColor: currentVisualTheme.border }]} onPress={() => setShowTimePicker(true)}>
                   <Clock color="#a855f7" size={24} />
-                  <Text style={[styles.gridActionLabel, { color: currentVisualTheme.subText }]}>{t('notificationTime')}</Text>
+                  <Text style={[styles.gridActionLabel, { color: currentVisualTheme.text }]}>{t('notificationTime')}</Text>
                 </TouchableOpacity>
               </View>
 
@@ -325,10 +323,22 @@ export default function App() {
             <Text style={[styles.tabTitle, { color: currentVisualTheme.text }]}>{t('settingsTitle')}</Text>
             
             <View style={styles.settingSection}>
+              <Text style={[styles.settingSectionTitle, { color: currentVisualTheme.subText }]}>{t('category')}</Text>
+              <View style={styles.themeGrid}>
+                {CATEGORIES_LIST.map(item => (
+                  <TouchableOpacity key={item.id} style={[styles.themeItem, { backgroundColor: theme === item.id ? currentVisualTheme.accent : currentVisualTheme.card, borderColor: currentVisualTheme.border }]} onPress={() => { setTheme(item.id); saveSetting('@lumina_theme', item.id); }}>
+                    <Text style={styles.themeIcon}>{item.icon}</Text>
+                    <Text style={[styles.themeLabel, { color: theme === item.id ? 'white' : currentVisualTheme.text }]}>{t('cat_' + item.id)}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.settingSection}>
               <Text style={[styles.settingSectionTitle, { color: currentVisualTheme.subText }]}>{t('appTheme')}</Text>
               <View style={styles.themeGrid}>
                 {['system', 'white', 'dark', 'material'].map(id => (
-                  <TouchableOpacity key={id} style={[styles.themeItem, appTheme === id && { backgroundColor: currentVisualTheme.accent }, { borderColor: currentVisualTheme.border }]} onPress={() => { setAppTheme(id); saveSetting('@lumina_app_theme', id); }}>
+                  <TouchableOpacity key={id} style={[styles.themeItem, { backgroundColor: appTheme === id ? currentVisualTheme.accent : currentVisualTheme.card, borderColor: currentVisualTheme.border }]} onPress={() => { setAppTheme(id); saveSetting('@lumina_app_theme', id); }}>
                     {id === 'system' && <Smartphone color={appTheme === id ? 'white' : currentVisualTheme.accent} size={24} />}
                     {id === 'white' && <Sun color={appTheme === id ? 'white' : currentVisualTheme.accent} size={24} />}
                     {id === 'dark' && <Moon color={appTheme === id ? 'white' : currentVisualTheme.accent} size={24} />}
@@ -341,12 +351,13 @@ export default function App() {
 
             <View style={styles.settingSection}>
               <Text style={[styles.settingSectionTitle, { color: currentVisualTheme.subText }]}>{t('language')}</Text>
-              <View style={styles.langList}>
+              <View style={[styles.langList, { backgroundColor: currentVisualTheme.card, borderColor: currentVisualTheme.border }]}>
                 {['ko', 'en', 'ja', 'zh'].map(l => (
                   <TouchableOpacity key={l} style={[styles.langItem, language === l && { backgroundColor: currentVisualTheme.accent }]} onPress={() => { setLanguage(l); saveSetting('@lumina_lang', l); }}>
                     <Text style={[styles.langText, { color: language === l ? 'white' : currentVisualTheme.text }]}>
                         {l === 'ko' ? '한국어' : l === 'en' ? 'English' : l === 'ja' ? '日本語' : '中文'}
                     </Text>
+                    {language === l && <Check color="white" size={16} />}
                   </TouchableOpacity>
                 ))}
               </View>
@@ -414,9 +425,10 @@ const styles = StyleSheet.create({
   settingSection: { marginBottom: 32, paddingHorizontal: 24 },
   settingSectionTitle: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 16 },
   themeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  themeItem: { width: (width - 60) / 2, backgroundColor: 'white', padding: 20, borderRadius: 24, alignItems: 'center', gap: 12, borderWidth: 1 },
+  themeItem: { width: (width - 60) / 2, padding: 20, borderRadius: 24, alignItems: 'center', gap: 12, borderWidth: 1 },
+  themeIcon: { fontSize: 24 },
   themeLabel: { fontSize: 14, fontWeight: '700' },
-  langList: { backgroundColor: 'white', borderRadius: 24, padding: 8, borderWidth: 1, borderColor: '#F1F5F9' },
+  langList: { borderRadius: 24, padding: 8, borderWidth: 1 },
   langItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderRadius: 16 },
   langText: { fontSize: 15, fontWeight: '600' },
   loginCard: { padding: 32, alignItems: 'center' },
