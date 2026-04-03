@@ -140,11 +140,10 @@ export default function App() {
     ? (sysScheme === 'dark' ? APP_THEMES.dark : APP_THEMES.white)
     : (APP_THEMES[appTheme] || APP_THEMES.white);
 
-  // Google Auth: MUST populate these from Google Cloud Console to fix "invalid_client"
+  // Google Auth: Successfully updated with User's NEW project IDs
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: "YOUR_ANDROID_CLIENT_ID_GOES_HERE.apps.googleusercontent.com",
-    iosClientId: "YOUR_IOS_CLIENT_ID_GOES_HERE.apps.googleusercontent.com",
-    webClientId: "YOUR_WEB_CLIENT_ID_GOES_HERE.apps.googleusercontent.com",
+    androidClientId: "28269870370-9n32cpa1hclfmno0plr9e5ctpa4a5c6c.apps.googleusercontent.com",
+    webClientId: "28269870370-l464dp70lvgfjuuvk88mimdpllvahmvf.apps.googleusercontent.com",
   });
 
   useEffect(() => {
