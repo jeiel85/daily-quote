@@ -140,10 +140,11 @@ export default function App() {
     ? (sysScheme === 'dark' ? APP_THEMES.dark : APP_THEMES.white)
     : (APP_THEMES[appTheme] || APP_THEMES.white);
 
-  // Google Provider check
+  // Google Auth: MUST populate these from Google Cloud Console to fix "invalid_client"
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: "DUMMY_ID.apps.googleusercontent.com",
-    webClientId: "DUMMY_ID.apps.googleusercontent.com",
+    androidClientId: "YOUR_ANDROID_CLIENT_ID_GOES_HERE.apps.googleusercontent.com",
+    iosClientId: "YOUR_IOS_CLIENT_ID_GOES_HERE.apps.googleusercontent.com",
+    webClientId: "YOUR_WEB_CLIENT_ID_GOES_HERE.apps.googleusercontent.com",
   });
 
   useEffect(() => {
@@ -176,6 +177,19 @@ export default function App() {
   };
 
   const saveSetting = async (key: string, value: string) => { await AsyncStorage.setItem(key, value); };
+
+  const handleTimeChange = async (event: any, selectedDate?: Date) => {
+    setShowTimePicker(false);
+    if (selectedDate) {
+      setNotifTime(selectedDate);
+      await scheduleDailyQuoteNotification(selectedDate.getHours(), selectedDate.getMinutes(), quote?.text || t('wisdomDesc'));
+      setIsNotified(true);
+      await AsyncStorage.setItem('@lumina_notified', 'true');
+      const hourStr = selectedDate.getHours().toString().padStart(2, '0');
+      const minStr = selectedDate.getMinutes().toString().padStart(2, '0');
+      Alert.alert(t('subscribed'), `${hourStr}:${minStr} 에 배달됩니다.`);
+    }
+  };
 
   const loadHistoryFromFirestore = (uid: string) => {
     const historyRef = collection(db, 'users', uid, 'history');
@@ -305,7 +319,18 @@ export default function App() {
               </TouchableOpacity>
             </View>
 
-            {showTimePicker && <DateTimePicker value={notifTime} mode="time" is24Hour={true} onChange={(e, d) => { setShowTimePicker(false); if(d) setNotifTime(d); }} />}
+            {showTimePicker && (
+              <DateTimePicker 
+                value={notifTime} 
+                mode="time" 
+                is24Hour={true} 
+                display={Platform.OS === 'android' ? 'spinner' : 'default'}
+                onChange={(e, d) => { 
+                  setShowTimePicker(false); 
+                  if(d) handleTimeChange(e, d); 
+                }} 
+              />
+            )}
           </ScrollView>
         )}
 

@@ -2,9 +2,9 @@ import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
   initializeAuth, 
-  getReactNativePersistence,
   GoogleAuthProvider // 추가: 구글 제공업체
 } from 'firebase/auth';
+import { getReactNativePersistence } from 'firebase/auth/react-native';
 import { getFirestore } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
