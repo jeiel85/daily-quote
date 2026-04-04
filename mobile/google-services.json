@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "136746254242",
+    "project_id": "lumina-762f8",
+    "storage_bucket": "lumina-762f8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:136746254242:android:8aacbf3205806f3116bcfb",
+        "android_client_info": {
+          "package_name": "com.jeiel85.luminadaily"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "136746254242-e1ece3rc3gf7bru38lqi3dr1sd2k9oev.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jeiel85.luminadaily",
+            "certificate_hash": "9e093f5c043c65e39ea7af4a9927e8f72d791577"
+          }
+        },
+        {
+          "client_id": "136746254242-e1ece3rc3gf7bru38lqi3dr1sd2k9oev.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jeiel85.luminadaily",
+            "certificate_hash": "97255E13C9F64DF7235B3988E7CA339F091B1D92"
+          }
+        },
+        {
+          "client_id": "136746254242-rqqaqpdltemsm1i1orrnp66oholf6qqe.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCo8oongfHOHc_I4ZnEGnYRhMP01KNyJFs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "136746254242-rqqaqpdltemsm1i1orrnp66oholf6qqe.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

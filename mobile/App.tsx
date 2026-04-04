@@ -42,7 +42,10 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { generateNativeQuote, generateNativeImage, Quote } from './src/lib/ai';
 import { auth, db } from './src/config/firebase';
 import { signInAnonymously, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
-import * as Google from 'expo-auth-session/providers/google';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+GoogleSignin.configure({
+  webClientId: '136746254242-rqqaqpdltemsm1i1orrnp66oholf6qqe.apps.googleusercontent.com',
+});
 import { 
   registerForPushNotificationsAsync, 
   scheduleDailyQuoteNotification,
@@ -139,20 +142,29 @@ export default function App() {
   const currentVisualTheme = appTheme === 'system' 
     ? (sysScheme === 'dark' ? APP_THEMES.dark : APP_THEMES.white)
     : (APP_THEMES[appTheme] || APP_THEMES.white);
+  const handleGoogleLogin = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const result: any = await GoogleSignin.signIn();
 
-  // Google Auth: FINALIZED with correct Web client ID for new project
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: "28269870370-9n32cpa1hclfmno0plr9e5ctpa4a5c6c.apps.googleusercontent.com",
-    webClientId: "28269870370-knbfrt9acp1kgvjcfbj7pbdhl1rhfrlj.apps.googleusercontent.com",
-  });
+      // v16+: signIn() returns { type, data } instead of throwing on cancel
+      if (result?.type === 'cancelled' || result?.type === 'noSavedCredentialFound') return;
 
-  useEffect(() => {
-    if (response?.type === 'success') {
-      const { id_token } = response.params;
-      const credential = GoogleAuthProvider.credential(id_token);
-      signInWithCredential(auth, credential);
+      const idToken = result?.data?.idToken ?? result?.idToken;
+
+      if (!idToken) {
+        Alert.alert(t('errorTitle'), `idToken not found.\nresult.type: ${result?.type}`);
+        return;
+      }
+
+      const credential = GoogleAuthProvider.credential(idToken);
+      await signInWithCredential(auth, credential);
+    } catch (error: any) {
+      // v16 still throws for DEVELOPER_ERROR (10), SIGN_IN_REQUIRED, etc.
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) return;
+      Alert.alert(t('errorTitle'), `[${error.code}] ${error.message}`);
     }
-  }, [response]);
+  };
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
@@ -247,7 +259,7 @@ export default function App() {
           <TouchableOpacity style={[styles.loginButton, { backgroundColor: currentVisualTheme.accent }]} onPress={() => signInAnonymously(auth)}>
             <LogIn color="white" size={20} /><Text style={styles.loginButtonText}>{t('loginAnonymously')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.loginButton, { backgroundColor: '#ea4335', marginTop: 12 }]} onPress={() => promptAsync()}>
+          <TouchableOpacity style={[styles.loginButton, { backgroundColor: '#ea4335', marginTop: 12 }]} onPress={handleGoogleLogin}>
             <LogIn color="white" size={20} /><Text style={styles.loginButtonText}>{t('loginGoogle')}</Text>
           </TouchableOpacity>
         </View>

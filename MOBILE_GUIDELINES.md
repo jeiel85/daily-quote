@@ -1,33 +1,71 @@
 # Lumina Mobile Development Guidelines
 
-이 문서는 Lumina 프로젝트의 모바일 애플리케이션 개발 철학과 기술적 지침을 정의합니다. 모든 추가 개발 및 유지보수 시 본 가이드를 준수하여 브랜드 아이덴티티와 사용자 경험의 일관성을 유지하십시오.
+이 문서는 Lumina 프로젝트의 모바일 애플리케이션 개발 철학 및 누락 없는 연속성을 위한 엄격한 지침을 정의합니다.
 
-## 1. 디자인 철학 (Design Philosophy)
-- **AI 브랜딩 배제**: "AI가 생성한", "AI의 해설" 등 인공지능을 강조하는 워딩을 최대한 지양합니다. 대신 "Lumina", "지혜(Wisdom)", "사색(Reflection)" 등의 단어를 사용하여 따뜻하고 감성적인 지혜 전달 플랫폼으로서의 가치를 강조합니다.
-- **프리미엄 미니멀리즘**: Neutral-50 기반의 깨끗한 배경과 IndigoAccent 포인트 컬러를 사용하며, 적절한 여백과 부드러운 그림자를 통해 고급스러운 UI를 유지합니다.
+## 🚨 [CRITICAL] 기능 누락 방지 수칙 (Feature Integrity)
+- **기능 보존 원칙**: 모든 코드 수정 및 리팩토링 시, 기존에 구현된 핵심 기능(카테고리, 다국어, 인증 등)이 목록에서 삭제되거나 누락되지 않도록 **철저히 검증**해야 합니다.
+- **필수 기능 체크리스트**:
+  1. 명언 카테고리 (8종: Motivation, Comfort, Humor, Success, Love, Calm, Growth, Leadership)
+  2. 다국어 지원 (4종: ko, en, ja, zh)
+  3. 구글 로그인 및 기록 동기화
+  4. 앱 테마 시스템 (White, Dark, System, Material You)
+  5. 지혜 배달(알림) 시간 설정
+
+## 1. 디자인 및 가독성 지침
+- **고대비(High Contrast) 보장**: 모든 테마(특히 Dark/Material)에서 버튼 배경과 글자색이 겹쳐 보이지 않도록 대비가 확실한 색상 조합을 사용합니다. (`subText`, `accent` 등의 명시적 구분)
+- **UI 일관성**: 헤더, 카드, 버튼 등의 레이아웃은 프로젝트 초기 브랜딩을 계승하며, 사용자 요청이 없는 한 임의로 대폭 변경하지 않습니다.
 
 ## 2. UI/UX 레이아웃 지침
-- **헤더 및 상단 간격**: 상태바(StatusBar)와 겹치지 않도록 안드로이드 기준 `paddingTop: 40` 이상의 SafeArea 처리를 항상 적용합니다.
-- **카드 저장 및 공유**: `ViewShot`을 통해 지혜 카드를 저장할 때는 배경의 검정색 잔상이 남지 않도록 **라운딩(BorderRadius)을 제거한 사각형 형태**로 캡처하도록 구현합니다.
-- **반응형 테마**: 사용자가 선택한 카테고리(현재 8종: 동기부여, 위로, 유머, 성공, 사랑, 평온, 성장, 리더십)에 따라 배경 그라데이션 또는 이미지가 유동적으로 변화해야 합니다.
+- **상단 SafeArea**: 상태바와 겹치지 않도록 안드로이드 기준 `paddingTop: 40` 이상의 SafeArea 처리를 항상 적용합니다.
+- **카드 캡처**: 공유 이미지 생성 시 배경 잔상이 남지 않도록 라운딩을 제거한 캡처 모드를 지원합니다.
 
-## 3. 다국어 지원 (i18n) 시스템
-- **동적 번역 원칙**: `App.tsx` 내 `TRANSLATIONS` 객체와 `t()` 함수를 사용하여 언어(ko, en, ja, zh) 변경 시 즉시 모든 UI가 해당 언어로 갱신되도록 합니다.
-- **범용 문구**: "매일 아침 8시"와 같은 고정 문구보다는 알림 시간이 바뀔 수 있음을 감안하여 "매일 전하는 지혜"와 같이 범용적인 문구를 사용합니다.
+## 3. 다국어 및 기술 스택
+- **i18n**: `TRANSLATIONS` 객체에서 누락된 언어가 발생하지 않도록 정기적으로 점검합니다.
+- **Build System**: 아래 빌드 워크플로우를 참고합니다.
 
-## 4. 기술 스택 및 통신
-- **Firebase Auth**: 익명 로그인(signInAnonymously)을 기본으로 하며, Firebase Console에서 해당 기능이 활성화되어 있어야 합니다.
-- **오프라인 번들링**: 무선 디버깅 환경에서 발생하는 네트워크 지연 및 스크립트 로드 오류를 방지하기 위해, 배포 전에는 반드시 `expo export:embed`를 통한 오프라인 자바스크립트 번들링을 수행합니다.
+## 4. 빌드 워크플로우
 
-## 5. 자동화 및 빌드 시스템
-- **build_and_install.bat**: 다음 명령들을 포함하는 전용 배치 파일을 사용하여 빌드와 설치를 자동화합니다.
-  1. `expo export:embed` (JS 번들링)
-  2. `expo prebuild` (네이티브 에셋 동기화)
-  3. `gradlew assembleDebug` (APK 생성)
-  4. `adb install` (장치 설치)
+### 개발 모드 (권장 - Fast Refresh)
+```
+# 최초 1회: 네이티브 빌드 + 설치
+dev_setup.bat
 
-## 6. Git 관리 및 정기 푸시
-- 모든 주요 UI 변경, 로직 수정, 에셋 업데이트 시에는 명확한 커밋 메시지와 함께 정기적으로 원격 저장소에 푸시하여 작업의 연속성을 확보합니다.
+# 이후 매일: Metro 서버만 실행
+dev_start.bat
+```
+- 코드 수정 후 저장하면 앱에 즉시 반영 (재빌드 불필요)
+- `google-services.json`, `app.json`, 네이티브 패키지 변경 시에만 `dev_setup.bat` 재실행
+
+### 프로덕션 빌드
+```
+build_and_install.bat
+```
+- `lumina-debug.keystore` 사용 (SHA1: `97:25:5E:13:...` Firebase 등록 완료)
+- prebuild → JS Bundle → `gradlew installDebug` 순서로 실행
+
+## 5. Firebase 설정 (lumina-762f8)
+
+| 항목 | 값 |
+|------|-----|
+| Project ID | `lumina-762f8` |
+| Android Package | `com.jeiel85.luminadaily` |
+| Keystore (dev) | `lumina-debug.keystore` |
+| SHA1 (dev) | `97:25:5E:13:C9:F6:4D:F7:23:5B:39:88:E7:CA:33:9F:09:1B:1D:92` |
+| SHA1 (default debug) | `9E:09:3F:5C:04:3C:65:E3:9E:A7:AF:4A:99:27:E8:F7:2D:79:15:77` |
+
+- Firestore 보안 규칙: 로그인 사용자는 자신의 `users/{uid}/history` 경로만 읽기/쓰기 허용
+- Google Sign-in: Firebase Console → Authentication → Sign-in method → Google 활성화 필요
+
+## 6. Google Sign-in 트러블슈팅
+
+| 에러 코드 | 원인 | 해결 |
+|-----------|------|------|
+| `[10] DEVELOPER_ERROR` | APK 서명 SHA1이 Firebase에 미등록 | Firebase Console에 SHA1 추가 후 google-services.json 재다운로드 |
+| `[7]` | 네트워크 오류 | 인터넷 연결 확인 |
+| `[12500]` | Play Services 버전 낮음 | Play Services 업데이트 |
+
+- `@react-native-google-signin/google-signin` **v16** 기준: `signIn()` 취소 시 throw 대신 `{ type: 'cancelled' }` 반환
+- `webClientId`: `136746254242-rqqaqpdltemsm1i1orrnp66oholf6qqe.apps.googleusercontent.com` (type 3, Web)
 
 ---
-*Last Updated: 2026-04-02*
+*Last Updated: 2026-04-04 | Ver 1.3*

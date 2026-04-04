@@ -1,94 +1,119 @@
 @echo off
 setlocal EnableDelayedExpansion
 echo.
-echo ========================================
+echo ============================================
 echo   Lumina Build ^& Install - Galaxy S24
-echo ========================================
+echo ============================================
 echo.
 
-:: Project Path
-cd /d D:\Project\lumina-daily\mobile
-
-:: Set Android SDK Path (Strict without trailing space)
+:: =============================================
+:: CONFIG
+:: =============================================
+set PROJECT_DIR=D:\Project\lumina-daily\mobile
+set PACKAGE=com.jeiel85.luminadaily
 set ANDROID_HOME=C:\Users\jeiel\AppData\Local\Android\Sdk
+set ADB_EXE=%ANDROID_HOME%\platform-tools\adb.exe
+set FALLBACK_IP=192.168.45.149:5555
 set PATH=%PATH%;%ANDROID_HOME%\platform-tools
 
-:: Create local.properties with correct format and NO trailing space
-(echo sdk.dir=C:/Users/jeiel/AppData/Local/Android/Sdk)>android/local.properties
+cd /d "%PROJECT_DIR%"
+(echo sdk.dir=C:/Users/jeiel/AppData/Local/Android/Sdk)>android\local.properties
 
-set ADB="%ANDROID_HOME%\platform-tools\adb.exe"
-set FALLBACK_DEVICE=192.168.45.149:5555
-set TARGET_DEVICE=
+:: =============================================
+:: [0] DETECT DEVICE
+:: =============================================
+echo [0/4] Detecting Galaxy S24...
 
-if not exist %ADB% (
-    echo ERROR: adb.exe not found at %ADB%
+if not exist "%ADB_EXE%" (
+    echo [ERROR] adb.exe not found: %ADB_EXE%
     pause & exit /b 1
 )
 
-echo [0/5] Detecting Galaxy S24 (SM-S92x)...
+set ADB="%ADB_EXE%"
+set TARGET=
 
 for /f "skip=1 tokens=1,2" %%A in ('%ADB% devices') do (
     if "%%B"=="device" (
         for /f "usebackq delims=" %%M in (`%ADB% -s %%A shell getprop ro.product.model 2^>nul`) do (
-            set MODEL_NAME=%%M
-            echo !MODEL_NAME! | findstr /i "SM-S92" >nul
+            set MODEL=%%M
+            echo !MODEL! | findstr /i "SM-S92" >nul
             if !errorlevel! equ 0 (
-                set TARGET_DEVICE=%%A
-                echo   Found: %%A ^(model: !MODEL_NAME!^)
-                goto :DeviceFound
+                set TARGET=%%A
+                echo   Found: %%A ^(!MODEL!^)
+                goto :DeviceOK
             )
         )
     )
 )
 
-:DeviceFound
-if "%TARGET_DEVICE%" neq "" goto :BuildStart
-
-echo   Auto-detect failed. Trying fallback: %FALLBACK_DEVICE%...
+:: Fallback to WiFi IP
 for /f "skip=1 tokens=1,2" %%A in ('%ADB% devices') do (
-    if "%%A"=="%FALLBACK_DEVICE%" if "%%B"=="device" (
-        set TARGET_DEVICE=%FALLBACK_DEVICE%
-        echo   Found via fallback: %FALLBACK_DEVICE%
-        goto :BuildStart
+    if "%%A"=="%FALLBACK_IP%" if "%%B"=="device" (
+        set TARGET=%FALLBACK_IP%
+        echo   Fallback: %FALLBACK_IP%
+        goto :DeviceOK
     )
 )
 
-echo ERROR: Galaxy S24 not found.
+echo [ERROR] Galaxy S24 not found. Check USB/WiFi connection.
 pause & exit /b 1
 
-:BuildStart
-set START_TIME=%TIME%
-
+:DeviceOK
 echo.
-echo [1/5] Bundling JavaScript (Offline Mode)...
-if not exist "android\app\src\main\assets" mkdir "android\app\src\main\assets"
-call npx expo export:embed --platform android --dev false --entry-file index.ts --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
-if %errorlevel% neq 0 ( echo ERROR: Bundling failed & pause & exit /b 1 )
 
-echo.
-echo [2/5] Syncing Native Assets (Icons/Names)...
+:: =============================================
+:: [1] EXPO PREBUILD
+:: =============================================
+echo [1/4] expo prebuild (native sync)...
 call npx expo prebuild --platform android --no-install
-if %errorlevel% neq 0 ( echo ERROR: Prebuild failed & pause & exit /b 1 )
+if %errorlevel% neq 0 (
+    echo [ERROR] Prebuild failed.
+    pause & exit /b 1
+)
 
+:: =============================================
+:: [2] JS BUNDLE (embed into APK)
+:: =============================================
 echo.
-echo [3/5] gradlew assembleDebug...
+echo [2/4] Bundling JavaScript...
+if not exist "android\app\src\main\assets" mkdir "android\app\src\main\assets"
+call npx expo export:embed ^
+    --platform android ^
+    --dev false ^
+    --entry-file index.ts ^
+    --bundle-output android\app\src\main\assets\index.android.bundle
+if %errorlevel% neq 0 (
+    echo [ERROR] JS bundle failed.
+    pause & exit /b 1
+)
+
+:: =============================================
+:: [3] GRADLE BUILD + INSTALL
+:: =============================================
+echo.
+echo [3/4] Gradle installDebug -> %TARGET%...
+copy /Y lumina-debug.keystore android\app\debug.keystore >nul
+
 cd android
-call gradlew assembleDebug --quiet
-if %errorlevel% neq 0 ( echo ERROR: gradle build failed & pause & exit /b 1 )
+set ANDROID_SERIAL=%TARGET%
+call gradlew installDebug
+if %errorlevel% neq 0 (
+    echo [ERROR] Gradle build/install failed.
+    cd ..
+    pause & exit /b 1
+)
 cd ..
 
+:: =============================================
+:: [4] LAUNCH APP
+:: =============================================
 echo.
-echo [4/5] adb install -> %TARGET_DEVICE%...
-%ADB% -s %TARGET_DEVICE% install -r "android\app\build\outputs\apk\debug\app-debug.apk"
-if %errorlevel% neq 0 ( echo ERROR: adb install failed & pause & exit /b 1 )
+echo [4/4] Launching Lumina...
+%ADB% -s %TARGET% shell am start -n %PACKAGE%/%PACKAGE%.MainActivity
 
 echo.
-echo [5/5] Launching Lumina...
-%ADB% -s %TARGET_DEVICE% shell am start -n com.jeiel85.luminadaily/com.jeiel85.luminadaily.MainActivity
-
-echo.
-echo ========================================
-echo   Done! Device: %TARGET_DEVICE%
-echo ========================================
+echo ============================================
+echo   Done^^! Device: %TARGET%
+echo ============================================
 echo.
 pause
