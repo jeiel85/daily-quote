@@ -126,7 +126,6 @@ export default defineConfig(({mode}) => {
         output: {
           manualChunks: {
             'firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/messaging'],
-            'gemini': ['@google/generative-ai'],
             'motion': ['motion/react'],
             'vendor': ['react', 'react-dom', 'react-i18next', 'i18next']
           }

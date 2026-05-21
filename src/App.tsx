@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   auth,
   db,
-  functions,
   signInWithGoogle,
   logout,
   requestNotificationPermission,
@@ -19,13 +18,13 @@ import {
 } from './firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { doc, getDoc, setDoc, collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, Timestamp, getDocFromServer } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
 import { useTranslation } from 'react-i18next';
 import './i18n/config';
 import { Capacitor } from '@capacitor/core';
 
 import { Quote, UserSettings } from './types';
-import { THEMES, THEME_SEED_POOLS, BLOCKED_KEYWORDS, CARD_BACKGROUNDS, CARD_STYLES, LANGUAGES } from './constants';
+import { THEMES, THEME_SEED_POOLS, CARD_BACKGROUNDS, CARD_STYLES, LANGUAGES } from './constants';
+import { pickTodayQuote, canChangeTimeToday, markTimeChanged, poolSize, maybeRefreshRemoteQuotes } from './utils/quotePool';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { QuoteCard } from './components/QuoteCard';
 import { HistoryItem } from './components/HistoryItem';
@@ -68,7 +67,6 @@ export default function App() {
     email: '',
     notificationTime: '08:00',
     preferredThemes: ['motivation'],
-    customKeyword: '',
     preferredCardStyle: 'classic',
     isSubscribed: false,
     language: 'ko',
@@ -156,7 +154,6 @@ export default function App() {
               email: data.email || firebaseUser.email || '',
               notificationTime: data.notificationTime || '08:00',
               preferredThemes: data.preferredThemes || ['motivation'],
-              customKeyword: data.customKeyword || '',
               preferredCardStyle: data.preferredCardStyle || 'classic',
               language: data.language || i18n.language || 'ko',
               darkMode: data.darkMode || 'system',
@@ -181,7 +178,6 @@ export default function App() {
               email: firebaseUser.email || '',
               notificationTime: '08:00',
               preferredThemes: ['motivation'],
-              customKeyword: '',
               preferredCardStyle: 'classic',
               language: i18n.language || 'ko',
               darkMode: 'system',
@@ -337,7 +333,7 @@ export default function App() {
       return;
     }
 
-    const text = `${quote.text}. ${quote.author}. ${t('home.ai_explanation')}: ${quote.explanation}`;
+    const text = `${quote.text}. ${quote.author}. ${t('home.explanation')}: ${quote.explanation}`;
     const utterance = new SpeechSynthesisUtterance(text);
 
     const langMap: Record<string, string> = {
@@ -364,64 +360,72 @@ export default function App() {
     };
   }, []);
 
-  // Quote Generation — Cloud Functions 프록시 호출 (서버측에서 Gemini 호출, 클라이언트에는 키 없음)
-  const generateQuote = async (manualRetry = false) => {
-    if (!user) return;
-    if (manualRetry) setError(null);
-    setIsGenerating(true);
+  // 세션당 1회 자동 배달 — 풀에서 오늘의 명언을 꺼내 화면에 띄운다.
+  // 같은 날 두 번 부르면 캐시된 명언이 그대로 나오므로 안전하다.
+  const autoPickedRef = useRef(false);
+  useEffect(() => {
+    if (!user || !settings.uid) return;
+    if (autoPickedRef.current) return;
+    autoPickedRef.current = true;
+    deliverDailyQuote();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, settings.uid]);
 
-    // 클라이언트 측 키워드 사전 차단 (서버에서도 다시 검증함 — 이건 UX 즉시 피드백용)
-    if (settings.customKeyword) {
-      const kw = settings.customKeyword.toLowerCase();
-      if (BLOCKED_KEYWORDS.some(b => kw.includes(b))) {
-        alert(t('settings.keyword_blocked'));
+  // 원격 풀 갱신 — 앱 마운트 시 1회 시도 (24시간 캐시, fire-and-forget)
+  // 실패해도 번들/기존 캐시로 동작하므로 사용자 영향 없음
+  useEffect(() => {
+    maybeRefreshRemoteQuotes().then((r) => {
+      if (r.status === 'updated') console.log(`[quotePool] remote updated to v${r.version}`);
+    });
+  }, []);
+
+  // 오늘의 명언 배달 — 로컬 풀에서 1일 1회 선택, 사용자별 중복방지.
+  // 정책 상세는 src/utils/quotePool.ts 참고.
+  const deliverDailyQuote = async () => {
+    if (!user) return;
+
+    setIsGenerating(true);
+    try {
+      const lang = i18n.language || settings.language || 'ko';
+      const result = pickTodayQuote({
+        preferredThemes: settings.preferredThemes || ['motivation'],
+        language: lang,
+      });
+
+      if (!result) {
+        setError(t('common.error_pool_empty'));
         setIsGenerating(false);
         return;
       }
-    }
 
-    try {
-      const callable = httpsCallable<
-        { preferredThemes: string[]; customKeyword: string; language: string },
-        { id: string; text: string; author: string; explanation: string; theme: string; usageCount: number }
-      >(functions, 'generateQuote');
-
-      const result = await callable({
-        preferredThemes: settings.preferredThemes || ['motivation'],
-        customKeyword: settings.customKeyword || '',
-        language: i18n.language || 'ko',
-      });
-
-      const data = result.data;
-      const newQuote: Quote = {
-        id: data.id,
-        text: data.text,
-        author: data.author,
-        explanation: data.explanation,
-        theme: data.theme,
-        createdAt: serverTimestamp(),
-      };
-
-      setCurrentQuote(newQuote);
+      const { quote, isFresh } = result;
+      setCurrentQuote(quote);
       setIsGenerating(false);
-      trackEvent('generate_quote', { theme: data.theme, has_custom_keyword: !!settings.customKeyword });
-      hapticMedium();
-      trackActionForReview();
-    } catch (err: any) {
-      console.error('Error in generation process:', err);
-      // Firebase Functions HttpsError code 매핑
-      const code = err?.code as string | undefined;
-      if (code === 'functions/resource-exhausted') {
-        // 일일 한도 초과 — 서버 메시지 그대로 표시
-        setError(err?.message || t('common.error_generating_quote'));
-      } else if (code === 'functions/unauthenticated') {
-        setError(t('common.error_api_key_missing'));
-      } else if (code === 'functions/invalid-argument') {
-        // 키워드 차단 등
-        alert(t('settings.keyword_blocked'));
-      } else {
-        setError(t('common.error_generating_quote'));
+
+      if (isFresh) {
+        // Firestore history 저장 (기기 간 동기화 + 과거 명언 조회용)
+        try {
+          const docRef = await addDoc(collection(db, `users/${user.uid}/history`), {
+            text: quote.text,
+            author: quote.author,
+            explanation: quote.explanation,
+            theme: quote.theme,
+            uid: user.uid,
+            createdAt: serverTimestamp(),
+            source: 'daily',
+            poolQuoteId: quote.id,
+          });
+          setCurrentQuote((prev) => (prev ? { ...prev, id: docRef.id } : prev));
+        } catch (e) {
+          console.warn('[Firestore] history save failed:', e);
+        }
+        trackEvent('quote_delivered', { theme: quote.theme, language: lang, pool_size: poolSize() });
+        hapticMedium();
+        trackActionForReview();
       }
+    } catch (err) {
+      console.error('Error delivering quote:', err);
+      setError(t('common.error_loading_quote'));
       setIsGenerating(false);
     }
   };
@@ -887,11 +891,10 @@ export default function App() {
                   <QuoteCard
                     key={currentQuote?.id}
                     quote={currentQuote}
-                    isGenerating={isGenerating}
+                    isLoading={isGenerating}
                     isGeneratingCard={isGeneratingCard}
                     cardProgress={cardProgress}
                     onGenerateCard={() => currentQuote && generateQuoteCard(currentQuote)}
-                    onRefresh={() => generateQuote(true)}
                     onShare={() => currentQuote && handleShare(currentQuote)}
                     onSpeak={() => currentQuote && speakQuote(currentQuote)}
                     isSpeaking={isSpeaking}
@@ -935,13 +938,6 @@ export default function App() {
                         <p className="text-lg font-semibold text-neutral-700 dark:text-neutral-300">{t('history.empty_title')}</p>
                         <p className="text-sm text-neutral-400 dark:text-neutral-500">{t('history.empty_desc')}</p>
                       </div>
-                      <motion.button
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => { handleTabChange('home'); generateQuote(true); }}
-                        className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all"
-                      >
-                        {t('home.generate_first')}
-                      </motion.button>
                     </div>
                   ) : (
                     history.map((quote) => (
@@ -1025,6 +1021,17 @@ export default function App() {
                           <button
                             onClick={() => {
                               const time = `${String(tempHour).padStart(2, '0')}:${String(tempMinute).padStart(2, '0')}`;
+                              // 시간 변경은 하루 1회만 — 이미 오늘 바꿨으면 안내
+                              if (time !== settings.notificationTime && !canChangeTimeToday()) {
+                                setInAppNotification({
+                                  title: t('settings.notification_time'),
+                                  body: t('settings.time_change_limit'),
+                                });
+                                setTimeout(() => setInAppNotification(null), 4000);
+                                setShowTimePicker(false);
+                                return;
+                              }
+                              if (time !== settings.notificationTime) markTimeChanged();
                               saveSettings({ notificationTime: time });
                               setShowTimePicker(false);
                             }}
@@ -1097,31 +1104,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* 커스텀 키워드 */}
-                    <div className="space-y-2 pt-1">
-                      <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-300 px-1">{t('settings.custom_keyword')}</p>
-                      <p className="text-xs text-neutral-400 dark:text-neutral-500 px-1">{t('settings.custom_keyword_desc')}</p>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          maxLength={30}
-                          value={settings.customKeyword || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const isBlocked = BLOCKED_KEYWORDS.some(b => val.toLowerCase().includes(b));
-                            if (!isBlocked) saveSettings({ customKeyword: val });
-                          }}
-                          placeholder={t('settings.custom_keyword_placeholder')}
-                          className="w-full bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-2xl px-4 py-3 text-sm text-neutral-800 dark:text-neutral-200 placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-indigo-400"
-                        />
-                        {settings.customKeyword && (
-                          <button
-                            onClick={() => saveSettings({ customKeyword: '' })}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
-                          >✕</button>
-                        )}
-                      </div>
-                    </div>
                   </section>
 
                   {/* ─── 그룹 3: 외관 ─── */}

@@ -332,3 +332,70 @@ git status
 - 기존 사용자 데이터 손실 가능성이 있는 경우
 - 파괴적 Git 명령이 필요한 경우
 
+---
+
+## 명언 데이터 관리
+
+명언 풀은 `src/data/quotes.json` 한 곳에서 관리하고, 앱은 **번들된 사본 + JSDelivr CDN 원격 캐시** 하이브리드로 로드한다.
+
+### 데이터 구조
+
+```json
+{
+  "version": 1,                         // 변경할 때마다 +1
+  "generatedAt": "2026-05-21T...",
+  "quotes": [
+    {
+      "id": "ko-motivation-0001",       // {lang}-{theme}-{4자리} 고유 ID
+      "lang": "ko",                     // ko | en | ja | zh
+      "theme": "motivation",            // 9개 테마 중 하나
+      "text": "...",
+      "author": "...",                  // 실존 인물 OR "작자 미상" / "Unknown" / "詠み人知らず" / "佚名"
+      "explanation": "..."              // 2-3문장 해설
+    }
+  ]
+}
+```
+
+테마: `motivation, comfort, humor, success, business, love, philosophy, wisdom, life`
+
+### 명언 추가 흐름
+
+1. **편집**
+   - 직접 추가: `src/data/quotes.json`의 `quotes` 배열에 객체 추가. ID는 같은 (lang, theme) 안에서 최대 번호 + 1
+   - Gemini로 대량 추가: `GEMINI_API_KEY=... node scripts/generate-quotes.mjs --resume --per-bucket=60` (현재 50 → 60처럼 늘림)
+   - ChatGPT 수동: `scripts/QUOTE_PROMPT.md` 가이드 따라 `scripts/quote-drafts/{lang}-{theme}.json` 저장 후 `node scripts/import-quotes.mjs`
+
+2. **version 올리기** — `src/data/quotes.json`의 `"version"` 필드를 +1. **이걸 잊으면 사용자 앱이 새 데이터를 받지 않는다.**
+
+3. **commit + push**
+   ```
+   git add src/data/quotes.json
+   git commit -m "data: 명언 풀 vN+1 (총 X개)"
+   git push origin main
+   ```
+
+4. **반영 대기** — JSDelivr CDN 캐시(약 5~10분) 후 사용자 앱이 24시간마다 1회 체크할 때 자동 다운로드. 즉시 반영은 안 됨.
+
+### 원격 호스팅 동작
+
+- URL: `https://cdn.jsdelivr.net/gh/jeiel85/lumina-daily@main/src/data/quotes.json`
+- 클라이언트: 앱 마운트 시 `maybeRefreshRemoteQuotes()` 호출 (`src/utils/quotePool.ts`)
+- 24시간 안에 다시 부르면 no-op. fetch 실패해도 번들된 사본으로 작동
+- 새 버전 받으면 `localStorage['quote.remotePool']` 에 저장 → 다음부터 우선 사용
+
+### 강제 새로고침 (테스트용)
+
+브라우저 콘솔에서:
+```js
+import('./src/utils/quotePool').then(m => m.resetRemoteCache());
+location.reload();
+```
+
+### 주의
+
+- **`version` 누락/감소** → 클라이언트가 무시함 (안전장치)
+- **JSON 깨짐** → 원격 fetch 실패로 처리, 번들 사용 (앱 영향 0)
+- **APK 재배포 vs 원격 갱신** — 원격은 데이터만 갱신. UI/로직 변경 필요하면 APK 새로 배포
+- **JSDelivr 5분 캐시** — push 직후 안 보일 수 있음. 급할 때는 `https://purge.jsdelivr.net/gh/jeiel85/lumina-daily@main/src/data/quotes.json` 로 purge 가능
+

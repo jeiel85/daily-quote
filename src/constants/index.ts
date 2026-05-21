@@ -54,5 +54,3 @@ export const CARD_BACKGROUNDS = [
   { name: 'rose-elegance', type: 'gradient', colors: ['#be123c', '#881337'] as [string, string] },
   { name: 'lime-fresh', type: 'gradient', colors: ['#65a30d', '#3f6212'] as [string, string] },
 ];
-
-export const BLOCKED_KEYWORDS = ['섹스', '야동', '포륭', 'sex', 'porn', 'nude', 'naked', '씨발', '개새끼', '좆', '보지', '자지', 'fuck', 'shit', 'ass', 'bitch', 'nigger', 'faggot'];

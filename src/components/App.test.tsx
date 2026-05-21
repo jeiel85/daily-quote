@@ -19,15 +19,14 @@ describe('QuoteCard', () => {
     render(
       <QuoteCard
         quote={mockQuote}
-        isGenerating={false}
+        isLoading={false}
         isGeneratingCard={false}
         onGenerateCard={() => {}}
-        onRefresh={() => {}}
         onShare={() => {}}
         t={mockT}
       />
     );
-    
+
     expect(screen.getByText(/Test quote text/)).toBeDefined();
     expect(screen.getByText(/Test Author/)).toBeDefined();
   });
@@ -36,45 +35,34 @@ describe('QuoteCard', () => {
     render(
       <QuoteCard
         quote={null}
-        isGenerating={false}
+        isLoading={false}
         isGeneratingCard={false}
         onGenerateCard={() => {}}
-        onRefresh={() => {}}
         onShare={() => {}}
         t={mockT}
       />
     );
-    
-    // Should show no quote message
+
     expect(screen.getByText(/home.no_quote/)).toBeDefined();
   });
 
-  it('calls onRefresh when refresh button is clicked', () => {
-    const onRefresh = vi.fn();
-    const quote = {
-      text: 'Test quote text',
-      author: 'Test Author',
-      explanation: 'Test explanation',
-      theme: 'motivation',
-      createdAt: new Date(),
-    };
-    
+  it('calls onShare when share button is clicked', () => {
+    const onShare = vi.fn();
     render(
       <QuoteCard
-        quote={quote}
-        isGenerating={false}
+        quote={mockQuote}
+        isLoading={false}
         isGeneratingCard={false}
         onGenerateCard={() => {}}
-        onRefresh={onRefresh}
-        onShare={() => {}}
+        onShare={onShare}
         t={mockT}
       />
     );
-    
-    const refreshBtn = screen.getByText(/home.refresh/);
-    refreshBtn.click();
-    
-    expect(onRefresh).toHaveBeenCalled();
+
+    const shareBtn = screen.getByText(/share.button/);
+    shareBtn.click();
+
+    expect(onShare).toHaveBeenCalled();
   });
 });
 

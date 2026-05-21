@@ -1,7 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential, signOut, User as FirebaseUser } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import { getFunctions } from 'firebase/functions';
 import { getMessaging, getToken, onMessage, type Messaging, type NextFn, type MessagePayload } from 'firebase/messaging';
 import { getAnalytics, logEvent, type Analytics } from 'firebase/analytics';
 import { Capacitor } from '@capacitor/core';
@@ -91,8 +90,6 @@ const app = isConfigValid
 export const auth = getAuth(app);
 // Using the custom database ID 'lumina-daily' as requested
 export const db = getFirestore(app, databaseId || '(default)');
-// Cloud Functions — region 은 functions 측 onCall 의 region 과 일치해야 함
-export const functions = getFunctions(app, 'asia-northeast3');
 let _messaging: Messaging | null = null;
 if (typeof window !== 'undefined' && isConfigValid && !Capacitor.isNativePlatform()) {
   try {

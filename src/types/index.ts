@@ -15,7 +15,6 @@ export interface UserSettings {
   notificationTime: string;
   notificationTimeUTC?: string;
   preferredThemes: string[];
-  customKeyword: string;
   preferredCardStyle: string;
   isSubscribed: boolean;
   language: string;
