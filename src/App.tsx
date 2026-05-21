@@ -464,7 +464,13 @@ export default function App() {
       const fcmToken = token === 'granted_but_no_token' ? '' : token;
       setSettings(prev => ({ ...prev, isSubscribed: true, fcmToken }));
       trackEvent('notification_subscribe');
-      await setDoc(doc(db, 'users', user.uid), { isSubscribed: true, fcmToken, updatedAt: serverTimestamp() }, { merge: true });
+      // saveSettings 로 통일: isSubscribed 저장 + notificationTime 으로 LocalNotifications 스케줄
+      // (서버 cron 제거 후 알림은 100% LocalNotifications 의존이라 구독 시점에 반드시 스케줄 해둬야 함)
+      await saveSettings({
+        isSubscribed: true,
+        fcmToken,
+        notificationTime: settings.notificationTime,
+      });
     } else if (Notification.permission === 'denied') {
       setError(t('settings.status_desc'));
     }
