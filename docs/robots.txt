@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://jeiel85.github.io/lumina-daily/sitemap.xml
+Sitemap: https://jeiel85.github.io/lumina-daily-android/sitemap.xml

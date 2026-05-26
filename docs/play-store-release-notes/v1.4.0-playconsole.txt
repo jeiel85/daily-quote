@@ -1,0 +1,31 @@
+[ko-KR]
+Lumina Daily v1.4.0
+
+- 매번 AI를 호출하던 구조를 제거하고, 1,800개 명언 풀 기반의 1일 1배달 방식으로 바꿨어요.
+- 같은 날 다시 열어도 오늘의 명언이 유지됩니다.
+- 새 명언 풀은 원격 캐시로 받아올 수 있어 앱 재배포 없이 데이터 확장이 가능해졌어요.
+- 알림 시간 변경은 하루 1회로 제한되어 실수로 자주 바뀌지 않도록 개선했어요.
+
+[en-US]
+Lumina Daily v1.4.0
+
+- Replaced live AI generation with a 1,800-quote daily delivery pool.
+- Today's quote now stays consistent throughout the same day.
+- Remote quote pool updates can expand the library without requiring an app update.
+- Notification time changes are now limited to once per day to prevent accidental changes.
+
+[ja-JP]
+Lumina Daily v1.4.0
+
+- 毎回AI生成する方式をやめ、1,800件の名言プールから1日1回届ける方式に変更しました。
+- 同じ日には同じ「今日の名言」が表示されます。
+- リモートキャッシュにより、アプリ更新なしで名言データを拡張できます。
+- 通知時間の変更は1日1回までに制限され、誤変更を防ぎます。
+
+[zh-CN]
+Lumina Daily v1.4.0
+
+- 移除实时 AI 生成，改为基于 1,800 条名言库的每日推送。
+- 同一天内会保持同一句今日名言。
+- 通过远程缓存扩展名言库，无需重新发布应用。
+- 通知时间每天只能修改一次，减少误操作。
