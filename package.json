@@ -1,7 +1,7 @@
 {
   "name": "react-example",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.4.1",
   "type": "module",
   "overrides": {
     "protobufjs": ">=7.5.5"
@@ -62,4 +62,3 @@
     "workbox-window": "^7.4.0"
   }
 }
-
