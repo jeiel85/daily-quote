@@ -208,6 +208,25 @@ git push origin v1.0.5
 - Play Store는 APK 대신 **AAB(Android App Bundle)** 권장 → 필요 시 `bundleRelease`로 전환
 - Play App Signing 활성화 시: 지금 키스토어는 "업로드 키" 역할, 실제 배포는 구글 서버 키로 재서명됨
 
+### 릴리즈 완료 조건 — 바탕화면 파일 확인 필수
+
+새 버전 만들기 요청은 GitHub Release/CI 성공만으로 완료가 아니다. 사용자가 Play Console에 바로 올릴 수 있도록 실제 바탕화면에 아래 두 파일이 있어야 완료로 보고한다.
+
+- `LuminaDaily-vX.X.X-vcN.aab`
+- `LuminaDaily-vX.X.X-vcN-checksums.txt`
+
+현재 PC의 실제 바탕화면은 보통 `C:\Users\jeiel\OneDrive\바탕 화면`이다. `C:\Users\jeiel\Desktop`만 확인하고 끝내지 말고 `[Environment]::GetFolderPath('Desktop')`로 실제 경로를 확인한다.
+
+```powershell
+$desktop = [Environment]::GetFolderPath('Desktop')
+gh release download vX.X.X --repo jeiel85/lumina-daily-android --pattern 'app-release.aab' --pattern 'checksums.txt' --dir $env:TEMP\lumina-release --clobber
+Copy-Item $env:TEMP\lumina-release\app-release.aab (Join-Path $desktop 'LuminaDaily-vX.X.X-vcN.aab') -Force
+Copy-Item $env:TEMP\lumina-release\checksums.txt (Join-Path $desktop 'LuminaDaily-vX.X.X-vcN-checksums.txt') -Force
+Get-ChildItem $desktop -Filter 'LuminaDaily-vX.X.X-vcN*'
+```
+
+복사 후에는 `Get-FileHash -Algorithm SHA256`로 AAB 해시가 `checksums.txt`의 `app-release.aab` 항목과 일치하는지 확인한다. 이 확인 전에는 릴리즈 완료로 보고하지 않는다.
+
 ### 릴리즈 노트 작성 기준
 
 자동 생성된 PR 목록 대신 아래 형식으로 직접 작성:
