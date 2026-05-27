@@ -213,19 +213,19 @@ git push origin v1.0.5
 새 버전 만들기 요청은 GitHub Release/CI 성공만으로 완료가 아니다. 사용자가 Play Console에 바로 올릴 수 있도록 실제 바탕화면에 아래 두 파일이 있어야 완료로 보고한다.
 
 - `LuminaDaily-vX.X.X-vcN.aab`
-- `LuminaDaily-vX.X.X-vcN-checksums.txt`
+- `LuminaDaily-vX.X.X-vcN-release-notes.txt`
 
 현재 PC의 실제 바탕화면은 보통 `C:\Users\jeiel\OneDrive\바탕 화면`이다. `C:\Users\jeiel\Desktop`만 확인하고 끝내지 말고 `[Environment]::GetFolderPath('Desktop')`로 실제 경로를 확인한다.
 
 ```powershell
 $desktop = [Environment]::GetFolderPath('Desktop')
-gh release download vX.X.X --repo jeiel85/lumina-daily-android --pattern 'app-release.aab' --pattern 'checksums.txt' --dir $env:TEMP\lumina-release --clobber
+gh release download vX.X.X --repo jeiel85/lumina-daily-android --pattern 'app-release.aab' --dir $env:TEMP\lumina-release --clobber
 Copy-Item $env:TEMP\lumina-release\app-release.aab (Join-Path $desktop 'LuminaDaily-vX.X.X-vcN.aab') -Force
-Copy-Item $env:TEMP\lumina-release\checksums.txt (Join-Path $desktop 'LuminaDaily-vX.X.X-vcN-checksums.txt') -Force
+# release-notes.txt는 Play Console 붙여넣기용으로 <ko-KR>, <en-US> 블록을 포함해 작성한다.
 Get-ChildItem $desktop -Filter 'LuminaDaily-vX.X.X-vcN*'
 ```
 
-복사 후에는 `Get-FileHash -Algorithm SHA256`로 AAB 해시가 `checksums.txt`의 `app-release.aab` 항목과 일치하는지 확인한다. 이 확인 전에는 릴리즈 완료로 보고하지 않는다.
+복사 후에는 AAB와 릴리즈 노트 TXT가 실제 바탕화면에 있는지 확인한다. 이 확인 전에는 릴리즈 완료로 보고하지 않는다.
 
 ### 릴리즈 노트 작성 기준
 
