@@ -1,0 +1,36 @@
+<ko-KR>
+이번 업데이트는 주요 오류를 바로잡은 안정화 릴리스입니다.
+
+• 로그인 후 지난 명언 기록이 다시 정상적으로 표시되고 동기화됩니다.
+• 알림 구독 설정이 제대로 저장되어, 다시 켤 필요가 없습니다.
+• 설정한 시간에 매일 명언 알림이 정확히 도착합니다.
+
+그동안의 명언 기록과 설정은 그대로 유지됩니다.
+</ko-KR>
+<en-US>
+A stability update that fixes major issues.
+
+• Your past quote history shows up and syncs correctly again after sign-in.
+• Notification settings now save properly — no need to turn them back on.
+• Daily quote notifications arrive right on time at your chosen hour.
+
+Your existing history and settings are kept intact.
+</en-US>
+<ja-JP>
+主要な不具合を修正した安定化アップデートです。
+
+• ログイン後、過去の名言の履歴が再び正しく表示・同期されます。
+• 通知の登録設定が正しく保存され、再設定の必要がありません。
+• 設定した時間に毎日の名言通知が正確に届きます。
+
+これまでの履歴と設定はそのまま保持されます。
+</ja-JP>
+<zh-CN>
+本次更新修复了主要问题，提升了稳定性。
+
+• 登录后，过往的名言记录可再次正常显示并同步。
+• 通知订阅设置现在能正确保存，无需重新开启。
+• 每日名言通知会在您设定的时间准时送达。
+
+您已有的记录与设置将完整保留。
+</zh-CN>

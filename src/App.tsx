@@ -193,7 +193,8 @@ export default function App() {
             );
           }
         }, (err) => {
-          handleFirestoreError(err, OperationType.GET, `users/${firebaseUser.uid}`, firebaseUser);
+          // 스냅샷 에러 콜백에서 throw 하면 unhandled rejection 이 되므로 swallow
+          try { handleFirestoreError(err, OperationType.GET, `users/${firebaseUser.uid}`, firebaseUser); } catch { /* logged */ }
         });
 
         // 2. History Listener
@@ -210,7 +211,9 @@ export default function App() {
             setCurrentQuote(quotes[0]);
           }
         }, (err) => {
-          handleFirestoreError(err, OperationType.LIST, `users/${firebaseUser.uid}/history`, firebaseUser);
+          // 에러 시에도 스켈레톤이 영구히 멈추지 않도록 로딩 상태 해제 후 기록
+          setIsHistoryLoading(false);
+          try { handleFirestoreError(err, OperationType.LIST, `users/${firebaseUser.uid}/history`, firebaseUser); } catch { /* logged */ }
         });
 
         // 3. Connection Test
@@ -457,6 +460,44 @@ export default function App() {
     return unsubscribe;
   }, [user]);
 
+  // 매일 지정 시각 로컬 알림 스케줄 (네이티브 전용).
+  // 반드시 존재하는 리소스만 참조한다 — 과거 잘못된 smallIcon('ic_stat_icon_config_sample')
+  // 과 sound('beep.wav') 가 schedule 을 통째로 throw 시켜 알림이 아예 안 떴다.
+  const scheduleDailyNotification = async (time: string) => {
+    if (!Capacitor.isNativePlatform()) return;
+    const [hour, minute] = time.split(':').map(Number);
+    if (Number.isNaN(hour) || Number.isNaN(minute)) return;
+    try {
+      await LocalNotifications.requestPermissions();
+      await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            title: t('home.subscribe_title'),
+            body: t('home.subscribe_desc'),
+            id: 1,
+            schedule: { on: { hour, minute }, allowWhileIdle: true },
+            smallIcon: 'ic_stat_notification',
+          }
+        ]
+      });
+    } catch (e) {
+      console.warn('[LocalNotif] Schedule failed:', e);
+    }
+  };
+
+  // 구독자 앱 시작 시 로컬 알림 재스케줄 — 과거 버전(잘못된 아이콘)에서
+  // schedule 이 실패해 알림이 안 오던 사용자를 자동 복구한다. 1회만.
+  const reschedRef = useRef(false);
+  useEffect(() => {
+    if (reschedRef.current) return;
+    if (!Capacitor.isNativePlatform()) return;
+    if (!settings.isSubscribed) return;
+    reschedRef.current = true;
+    scheduleDailyNotification(settings.notificationTime);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.isSubscribed, settings.notificationTime]);
+
   const handleSubscribe = async () => {
     if (!user) return;
     const token = await requestNotificationPermission();
@@ -486,27 +527,7 @@ export default function App() {
       updates.notificationTimeUTC = `${String(local.getUTCHours()).padStart(2, '0')}:${String(local.getUTCMinutes()).padStart(2, '0')}`;
 
       // Schedule local notification (native only)
-      if (Capacitor.isNativePlatform()) {
-        try {
-          await LocalNotifications.requestPermissions();
-          await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
-          const [hour, minute] = updates.notificationTime.split(':').map(Number);
-          await LocalNotifications.schedule({
-            notifications: [
-              {
-                title: t('home.subscribe_title'),
-                body: t('home.subscribe_desc'),
-                id: 1,
-                schedule: { on: { hour, minute } },
-                sound: 'beep.wav',
-                smallIcon: 'ic_stat_icon_config_sample',
-              }
-            ]
-          });
-        } catch (e) {
-          console.warn('[LocalNotif] Schedule failed:', e);
-        }
-      }
+      await scheduleDailyNotification(updates.notificationTime);
     }
 
     setSettings(prev => ({ ...prev, ...updates }));

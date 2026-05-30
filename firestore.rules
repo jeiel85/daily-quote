@@ -2,39 +2,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // ===============================================================
-    // Assumed Data Model
-    // ===============================================================
+    // Lumina Daily — Firestore 보안 규칙
     //
-    // Collection: /users/{userId}
-    // Document ID: userId (UID)
-    // Fields:
-    //   - uid: string (required)
-    //   - email: string (required, email format)
-    //   - notificationTime: string (required)
-    //   - theme: string (required)
-    //   - language: string (required)
-    //   - darkMode: string (required, light|dark|system)
-    //   - isSubscribed: boolean (required)
-    //   - updatedAt: timestamp (required)
-    //   - fcmToken: string (optional)
+    // 데이터 모델
+    //   /users/{userId}                     — 사용자 설정 + 추천(referral) 필드
+    //   /users/{userId}/history/{quoteId}   — 배달된 명언 기록
+    //   /test/connection                    — 연결 확인용(읽기 전용)
     //
-    // Collection: /users/{userId}/history/{quoteId}
-    // Document ID: quoteId (auto-generated)
-    // Fields:
-    //   - text: string (required, max 1000)
-    //   - author: string (required, max 100)
-    //   - explanation: string (required, max 2000)
-    //   - theme: string (required)
-    //   - createdAt: timestamp (required)
-    //   - imageUrl: string (optional)
-    //   - uid: string (required)
-    //
+    // 설계 원칙 (2026-05-30 재작성)
+    //   - 본인 소유 문서만 접근(isOwner). 타인 데이터는 일절 불가.
+    //   - 필드 단위 화이트리스트 검증은 두지 않는다. 과거 엄격한
+    //     hasOnly/hasAll 검증이 클라이언트 스키마 변화(referralCode,
+    //     fontSize, notificationTimeUTC, source/poolQuoteId 등)와 어긋나
+    //     정상 쓰기를 거부했다. 사용자는 자기 문서만 쓸 수 있으므로
+    //     필드 검증 제거는 보안 손실이 사실상 없다.
+    //   - 단, role 자가 승격(admin)만은 차단한다(권한 상승 방지).
     // ===============================================================
 
-    // ===============================================================
-    // Helper Functions
-    // ===============================================================
-    
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -45,75 +29,40 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    function isValidEmail(email) {
-      return email is string &&
-        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
-    }
-
-    function hasOnlyAllowedFields(fields) {
-      return request.resource.data.keys().hasOnly(fields);
-    }
-
-    function hasRequiredFields(fields) {
-      return request.resource.data.keys().hasAll(fields);
-    }
-
-    // ===============================================================
-    // Domain Validators
-    // ===============================================================
-
-    function isValidUser(data) {
-      return hasRequiredFields(['uid', 'email', 'notificationTime', 'theme', 'preferredThemes', 'preferredCardStyle', 'language', 'darkMode', 'isSubscribed', 'updatedAt']) &&
-             hasOnlyAllowedFields(['uid', 'email', 'notificationTime', 'theme', 'preferredThemes', 'preferredCardStyle', 'language', 'darkMode', 'isSubscribed', 'updatedAt', 'fcmToken', 'role']) &&
-             data.uid == request.auth.uid &&
-             isValidEmail(data.email) &&
-             data.notificationTime is string && data.notificationTime.size() <= 5 &&
-             data.theme is string && data.theme.size() <= 50 &&
-             data.preferredThemes is list && data.preferredThemes.size() <= 10 &&
-             data.preferredCardStyle is string && data.preferredCardStyle.size() <= 50 &&
-             data.language is string && data.language.size() <= 10 &&
-             data.darkMode in ['light', 'dark', 'system', 'material'] &&
-             data.isSubscribed is bool &&
-             data.updatedAt is timestamp &&
-             (!('fcmToken' in data) || (data.fcmToken is string && data.fcmToken.size() <= 1000)) &&
-             (!('role' in data) || data.role == 'client' || isAdmin());
-    }
-
-    function isValidQuote(data) {
-      return hasRequiredFields(['text', 'author', 'explanation', 'theme', 'createdAt', 'uid']) &&
-             hasOnlyAllowedFields(['text', 'author', 'explanation', 'theme', 'createdAt', 'uid', 'imageUrl']) &&
-             data.text is string && data.text.size() <= 1000 &&
-             data.author is string && data.author.size() <= 100 &&
-             data.explanation is string && data.explanation.size() <= 2000 &&
-             data.theme is string && data.theme.size() <= 50 &&
-             data.createdAt is timestamp &&
-             (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() <= 1000000)) &&
-             data.uid == request.auth.uid;
-    }
-
-    // ===============================================================
-    // Rules
-    // ===============================================================
-
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
-      allow list: if isAdmin(); // Users shouldn't be listing the users collection
-      allow create: if isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
-                      (request.resource.data.role == resource.data.role || isAdmin());
+      allow read: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
 
+      // 생성: 본인 문서이고, role 을 admin 으로 셀프 부여하지 않을 것
+      allow create: if isOwner(userId) &&
+        (!('role' in request.resource.data) || request.resource.data.role == 'client');
+
+      // 수정: 본인 문서이고, role 을 바꾸지 않을 것(관리자만 변경 가능)
+      allow update: if isOwner(userId) &&
+        (!('role' in request.resource.data)
+          || request.resource.data.role == resource.data.role
+          || isAdmin());
+
+      allow delete: if isOwner(userId) || isAdmin();
+
+      // 명언 기록 — 본인만 읽고 쓴다. 필드 검증 없음(자기 데이터).
       match /history/{quoteId} {
-        allow list: if isOwner(userId) || isAdmin();
-        allow get: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId) && isValidQuote(request.resource.data);
-        allow update: if isOwner(userId) && isValidQuote(request.resource.data) && 
-                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['imageUrl']);
-        allow delete: if isOwner(userId) || isAdmin();
+        allow read, write: if isOwner(userId) || isAdmin();
       }
+
+      // 향후 추가될 하위 컬렉션도 본인만 접근
+      match /{document=**} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // 연결 확인용 — 인증된 사용자면 읽기 허용(App.tsx 의 test/connection)
+    match /test/{docId} {
+      allow read: if isAuthenticated();
     }
   }
 }
