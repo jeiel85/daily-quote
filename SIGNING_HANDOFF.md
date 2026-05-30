@@ -26,10 +26,11 @@
   - 계정 선택 시트 → idToken 획득 → Firebase 로그인 → 메인 화면 진입 정상 확인.
 
 ## 로컬 설정 상태
-- 로컬 keystore 파일 위치: `lumina-release.jks` (repo 루트)
-- 백업 위치: `.temp/` (gitignore 권장)
+- 로컬 keystore 파일 위치: `.keystore/lumina-release.jks` (2026-05-27 이전: 루트의 `lumina-release.jks`)
+- 백업 위치: `.keystore/lumina-upload-key.jks.bak` (SHA-256 동일, 이전 `.temp/lumina-upload-key.jks`에서 이동) + `.temp/lumina_uploadkey_20260507_103408/`(base64/cert 자료)
+- 두 폴더 모두 `.gitignore` 대상
 - `android/local.properties`에서 release 서명 경로:
-  - `RELEASE_STORE_FILE=../../lumina-release.jks`
+  - `RELEASE_STORE_FILE=../../.keystore/lumina-release.jks`
   - `RELEASE_KEY_ALIAS=lumina-upload`
 - 주의: `android/local.properties`는 민감정보 포함 가능성이 있어 Git 커밋 금지.
 
