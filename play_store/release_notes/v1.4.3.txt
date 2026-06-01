@@ -1,0 +1,32 @@
+<ko-KR>
+설정한 시간에 도착하는 알림이 이제 그날의 명언을 담아 옵니다.
+
+• 알림에 안내 문구 대신 실제 명언이 표시되도록 바로잡았습니다.
+• 매일 서로 다른 명언이 도착해 더 새롭게 만나보실 수 있어요.
+
+기존 명언 기록과 설정은 그대로 유지됩니다.
+</ko-KR>
+<en-US>
+Your daily notification now arrives with an actual quote.
+
+• Fixed the alert so it shows a real quote instead of a prompt message.
+• A different quote arrives each day for a fresh moment.
+
+Your existing history and settings are kept intact.
+</en-US>
+<ja-JP>
+設定した時間に届く通知が、その日の名言を届けるようになりました。
+
+• 案内文ではなく実際の名言が表示されるよう修正しました。
+• 毎日異なる名言が届き、新鮮な気持ちで出会えます。
+
+これまでの履歴と設定はそのまま保持されます。
+</ja-JP>
+<zh-CN>
+您设定时间收到的通知，现在会送上当天的名言。
+
+• 修复了通知，使其显示真正的名言而非提示文字。
+• 每天送达不同的名言，带来全新感受。
+
+您已有的记录与设置将完整保留。
+</zh-CN>

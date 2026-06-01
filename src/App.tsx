@@ -24,7 +24,7 @@ import { Capacitor } from '@capacitor/core';
 
 import { Quote, UserSettings } from './types';
 import { THEMES, THEME_SEED_POOLS, CARD_BACKGROUNDS, CARD_STYLES, LANGUAGES } from './constants';
-import { pickTodayQuote, canChangeTimeToday, markTimeChanged, poolSize, maybeRefreshRemoteQuotes } from './utils/quotePool';
+import { pickTodayQuote, pickQuotesForNotifications, canChangeTimeToday, markTimeChanged, poolSize, maybeRefreshRemoteQuotes } from './utils/quotePool';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { QuoteCard } from './components/QuoteCard';
 import { HistoryItem } from './components/HistoryItem';
@@ -53,6 +53,10 @@ const trackActionForReview = async () => {
 // Import icons
 import { Bell, Clock, History as HistoryIcon, Home, Settings as SettingsIcon, Sparkles, RefreshCw, ExternalLink, Download, Image as ImageIcon, ChevronRight, Globe, Palette, BookOpen, Type, Sun, Moon, Monitor, X } from 'lucide-react';
 import { LocalNotifications } from '@capacitor/local-notifications';
+
+// 미리 예약해 둘 일일 알림 일수. 앱을 매일 안 열어도 한동안 명언 알림이 끊기지 않도록
+// 버퍼를 둔다. 앱을 열 때마다(구독/시간 변경 시) 다시 가득 채워 예약한다.
+const NOTIF_DAYS = 30;
 
 export default function App() {
   const { t, i18n } = useTranslation();
@@ -463,24 +467,48 @@ export default function App() {
   // 매일 지정 시각 로컬 알림 스케줄 (네이티브 전용).
   // 반드시 존재하는 리소스만 참조한다 — 과거 잘못된 smallIcon('ic_stat_icon_config_sample')
   // 과 sound('beep.wav') 가 schedule 을 통째로 throw 시켜 알림이 아예 안 떴다.
+  //
+  // 알림 본문은 실제 "명언"이다. 과거엔 구독 권유 문구(home.subscribe_*)를 그대로
+  // 넣어 알림이 명언이 아니라 구독안내처럼 떴다. 또 반복 알림(on:{hour,minute}) 1개는
+  // 본문이 고정돼 매일 같은 문구만 떠서, 앞으로 N일치 서로 다른 명언을 날짜별로 예약한다.
   const scheduleDailyNotification = async (time: string) => {
     if (!Capacitor.isNativePlatform()) return;
     const [hour, minute] = time.split(':').map(Number);
     if (Number.isNaN(hour) || Number.isNaN(minute)) return;
     try {
       await LocalNotifications.requestPermissions();
-      await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
-      await LocalNotifications.schedule({
-        notifications: [
-          {
-            title: t('home.subscribe_title'),
-            body: t('home.subscribe_desc'),
-            id: 1,
-            schedule: { on: { hour, minute }, allowWhileIdle: true },
-            smallIcon: 'ic_stat_notification',
-          }
-        ]
+      // 이전 배치(id 1..NOTIF_DAYS)와 과거 단일 알림(id 1) 모두 취소
+      await LocalNotifications.cancel({
+        notifications: Array.from({ length: NOTIF_DAYS }, (_, i) => ({ id: i + 1 })),
       });
+
+      const lang = i18n.language || settings.language || 'ko';
+      const quotes = pickQuotesForNotifications(NOTIF_DAYS, {
+        preferredThemes: settings.preferredThemes || ['motivation'],
+        language: lang,
+      });
+      if (quotes.length === 0) return;
+
+      // 다음 발송 시각: 오늘 해당 시각이 이미 지났으면 내일부터 시작
+      const now = new Date();
+      const first = new Date(now);
+      first.setHours(hour, minute, 0, 0);
+      if (first.getTime() <= now.getTime()) first.setDate(first.getDate() + 1);
+
+      const title = t('home.title');
+      const notifications = quotes.map((q, i) => {
+        const at = new Date(first);
+        at.setDate(first.getDate() + i);
+        return {
+          id: i + 1,
+          title,
+          body: q.author ? `${q.text} — ${q.author}` : q.text,
+          schedule: { at, allowWhileIdle: true },
+          smallIcon: 'ic_stat_notification',
+          extra: { quoteId: q.id },
+        };
+      });
+      await LocalNotifications.schedule({ notifications });
     } catch (e) {
       console.warn('[LocalNotif] Schedule failed:', e);
     }

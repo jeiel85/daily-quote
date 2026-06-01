@@ -308,6 +308,47 @@ export function pickTodayQuote(opts: PickOptions): PickResult | null {
   return { quote: toQuote(picked), isFresh: true };
 }
 
+// ─── 알림 예약용 명언 묶음 ────────────────────────────────────────────────────
+
+/**
+ * 로컬 알림(앞으로 N일치)에 박아 넣을 명언을 한 번에 뽑는다.
+ *
+ * 일일 로컬 알림은 예약 시점에 본문이 확정돼 그날그날 새로 못 고르므로,
+ * 미리 서로 다른 명언 N개를 뽑아 날짜별로 예약한다.
+ *
+ * 주의: in-app 배달(pickTodayQuote)과는 별개 채널이라 seen/today 캐시를
+ * 일절 건드리지 않는다 — 알림에 쓴 명언이 "오늘의 명언"에서 빠지면 안 되므로.
+ *
+ * @param count 필요한 명언 수 (예약할 일수). 풀보다 크면 순환해서 채운다.
+ */
+export function pickQuotesForNotifications(count: number, opts: PickOptions): Quote[] {
+  if (count <= 0) return [];
+  const pool = POOL();
+
+  const themePool = opts.preferredThemes.includes('random') || opts.preferredThemes.length === 0
+    ? null
+    : new Set(opts.preferredThemes);
+
+  let candidates = pool.filter((q) => q.lang === opts.language);
+  if (themePool) candidates = candidates.filter((q) => themePool.has(q.theme));
+  if (candidates.length === 0) candidates = pool.filter((q) => q.lang === opts.language);
+  if (candidates.length === 0) candidates = pool;
+  if (candidates.length === 0) return [];
+
+  // Fisher-Yates 셔플 — 예약 때마다 순서를 섞어 같은 명언이 늘 첫날에 오지 않게
+  const shuffled = candidates.slice();
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  const out: Quote[] = [];
+  for (let i = 0; i < count; i++) {
+    out.push(toQuote(shuffled[i % shuffled.length]));
+  }
+  return out;
+}
+
 // ─── 알림 시간 변경 1일 1회 ───────────────────────────────────────────────────
 
 export function canChangeTimeToday(): boolean {
