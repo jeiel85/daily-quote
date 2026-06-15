@@ -17,14 +17,14 @@ import {
   trackEvent
 } from './firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, Timestamp, getDocFromServer } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, Timestamp, getDocFromServer, where, getDocs } from 'firebase/firestore';
 import { useTranslation } from 'react-i18next';
 import './i18n/config';
 import { Capacitor } from '@capacitor/core';
 
 import { Quote, UserSettings } from './types';
 import { THEMES, THEME_SEED_POOLS, CARD_BACKGROUNDS, CARD_STYLES, LANGUAGES } from './constants';
-import { pickTodayQuote, pickQuotesForNotifications, canChangeTimeToday, markTimeChanged, poolSize, maybeRefreshRemoteQuotes } from './utils/quotePool';
+import { pickTodayQuote, pickQuotesForNotifications, canChangeTimeToday, markTimeChanged, poolSize, maybeRefreshRemoteQuotes, findById, formatDate, markQuoteSeen, rememberTodayQuote, saveScheduledNotificationQuotes } from './utils/quotePool';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { QuoteCard } from './components/QuoteCard';
 import { HistoryItem } from './components/HistoryItem';
@@ -93,33 +93,104 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [inAppNotification, setInAppNotification] = useState<{ title: string; body: string } | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const pendingNotifQuoteId = useRef<string | null>(null);
+  const [pendingQuoteId, setPendingQuoteId] = useState<string | null>(null);
 
   // Notification tap listener (early mount, before auth)
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
+    let fcmListener: any;
+    let localListener: any;
+
     const setup = async () => {
       const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
-      FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
+      fcmListener = await FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
         const quoteId = (event.notification.data as Record<string, string> | undefined)?.quoteId;
-        if (quoteId) pendingNotifQuoteId.current = quoteId;
+        if (quoteId) {
+          console.log('[Notification] FCM tap detected. Quote ID:', quoteId);
+          setPendingQuoteId(quoteId);
+        }
+      });
+
+      localListener = await LocalNotifications.addListener('localNotificationActionPerformed', (event) => {
+        const quoteId = event.notification.extra?.quoteId;
+        if (quoteId) {
+          console.log('[Notification] Local notification tap detected. Quote ID:', quoteId);
+          setPendingQuoteId(quoteId);
+        }
       });
     };
+
     setup();
+
+    return () => {
+      if (fcmListener) fcmListener.remove();
+      if (localListener) localListener.remove();
+    };
   }, []);
 
-  // Load pending notification quote when user becomes available
+  // Load pending notification quote when user becomes available or pendingQuoteId is set
   useEffect(() => {
-    if (!user || !pendingNotifQuoteId.current) return;
-    const quoteId = pendingNotifQuoteId.current;
-    pendingNotifQuoteId.current = null;
-    getDoc(doc(db, 'users', user.uid, 'history', quoteId)).then((snap) => {
-      if (snap.exists()) {
-        setCurrentQuote({ id: snap.id, ...snap.data() } as Quote);
-        handleTabChange('home');
+    if (!user || !pendingQuoteId) return;
+
+    const quoteId = pendingQuoteId;
+    setPendingQuoteId(null); // 중복 방지를 위해 즉시 해제
+
+    const loadPendingQuote = async () => {
+      const rawQuote = findById(quoteId);
+      if (!rawQuote) {
+        console.warn('[Notification] Quote not found in pool:', quoteId);
+        return;
       }
-    }).catch(err => console.error('[Notification] Failed to load quote:', err));
-  }, [user]);
+
+      // 1. Local Cache 갱신 (오늘의 명언으로 확정)
+      rememberTodayQuote(quoteId);
+      markQuoteSeen(quoteId);
+
+      const quote: Quote = {
+        id: rawQuote.id,
+        text: rawQuote.text,
+        author: rawQuote.author,
+        explanation: rawQuote.explanation,
+        theme: rawQuote.theme,
+        createdAt: new Date(),
+      };
+
+      // 2. Firestore History 중복 체크 및 연동
+      try {
+        const q = query(
+          collection(db, 'users', user.uid, 'history'),
+          where('poolQuoteId', '==', quoteId),
+          limit(1)
+        );
+        const snap = await getDocs(q);
+
+        if (!snap.empty) {
+          const docSnap = snap.docs[0];
+          setCurrentQuote({ id: docSnap.id, ...docSnap.data() } as Quote);
+        } else {
+          // 새 history 문서 추가
+          const docRef = await addDoc(collection(db, `users/${user.uid}/history`), {
+            text: quote.text,
+            author: quote.author,
+            explanation: quote.explanation,
+            theme: quote.theme,
+            uid: user.uid,
+            createdAt: serverTimestamp(),
+            source: 'notification_tap',
+            poolQuoteId: quote.id,
+          });
+          setCurrentQuote({ ...quote, id: docRef.id });
+        }
+      } catch (e) {
+        console.warn('[Firestore] Pending notification history sync failed:', e);
+        setCurrentQuote(quote); // 실패하더라도 화면 노출 보장
+      }
+
+      handleTabChange('home');
+    };
+
+    loadPendingQuote();
+  }, [user, pendingQuoteId]);
 
   // Device & Orientation Listener
   useEffect(() => {
@@ -509,6 +580,18 @@ export default function App() {
         };
       });
       await LocalNotifications.schedule({ notifications });
+
+      // 예약 정보 로컬 저장 (오늘을 포함해 각 알림 날짜별 명언 ID 매핑)
+      const scheduledInfo = quotes.map((q, i) => {
+        const at = new Date(first);
+        at.setDate(first.getDate() + i);
+        return {
+          date: formatDate(at),
+          quoteId: q.id
+        };
+      });
+      saveScheduledNotificationQuotes(scheduledInfo);
+      console.log('[LocalNotif] Scheduled notifications and cached mappings:', scheduledInfo);
     } catch (e) {
       console.warn('[LocalNotif] Schedule failed:', e);
     }

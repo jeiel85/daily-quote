@@ -1,0 +1,32 @@
+<ko-KR>
+알림으로 받은 명언과 앱에서 보이는 오늘의 명언이 같도록 바로잡았습니다.
+
+• 오늘 이미 앱을 열었더라도, 예약된 알림 명언이 있으면 같은 명언으로 맞춰집니다.
+• 오래된 서버 푸시 경로를 정리해 알림이 다른 명언을 보내는 일을 막았습니다.
+
+기존 명언 기록과 설정은 그대로 유지됩니다.
+</ko-KR>
+<en-US>
+Fixed the daily quote shown in the app so it matches the quote delivered by your notification.
+
+• If you already opened the app today, the scheduled notification quote still becomes today's quote.
+• Removed the old server push path that could send a different quote.
+
+Your existing history and settings are kept intact.
+</en-US>
+<ja-JP>
+通知で届いた名言と、アプリ内の今日の名言が一致するよう修正しました。
+
+• その日にすでにアプリを開いていても、予約された通知の名言にそろえます。
+• 別の名言を送る可能性があった古いサーバー通知経路を整理しました。
+
+これまでの履歴と設定はそのまま保持されます。
+</ja-JP>
+<zh-CN>
+修复了通知中收到的名言与应用内今日名言不一致的问题。
+
+• 即使当天已经打开过应用，也会以预约通知中的名言作为今日名言。
+• 移除了可能发送不同名言的旧服务器推送路径。
+
+您已有的记录与设置将完整保留。
+</zh-CN>

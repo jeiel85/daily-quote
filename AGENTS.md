@@ -145,7 +145,7 @@ server: {
 1. `package.json` → `"version": "x.x.x"`
 2. `android/app/build.gradle` → `versionCode N` (정수, 1씩 증가), `versionName "x.x.x"`
 
-**현재 버전**: `package.json` = `1.4.1`, `versionCode` = `32`, `versionName` = `1.4.1`
+**현재 버전**: `package.json` = `1.4.4`, `versionCode` = `35`, `versionName` = `1.4.4`
 
 ---
 

@@ -6,7 +6,7 @@ Lumina Daily는 Android 전용 명언 · 성찰 앱입니다. v1.4.0부터 매�
 
 - Android 패키지명: `com.jeiel85.luminadaily`
 - 소개 페이지: [https://jeiel85.github.io/lumina-daily-android/](https://jeiel85.github.io/lumina-daily-android/) — 정적 랜딩 페이지, 웹앱 아님
-- 현재 버전: **v1.4.1** (Android `versionCode` 32)
+- 현재 버전: **v1.4.4** (Android `versionCode` 35)
 - 개인정보처리방침: [https://jeiel85.github.io/lumina-daily-android/privacy-policy.html](https://jeiel85.github.io/lumina-daily-android/privacy-policy.html)
 
 > GitHub Pages는 앱 소개용 랜딩 페이지입니다. 실제 앱은 Android APK/AAB에 번들된 Capacitor 앱으로 동작합니다.
@@ -171,6 +171,7 @@ lumina-daily/
 
 | 버전 | 주요 변경 |
 |---|---|
+| **1.4.4** | 알림 명언과 앱 홈의 오늘의 명언 동기화 수정, 오래된 서버 푸시 경로 제거 |
 | **1.4.1** | Play Store 프로덕션 출시용 버전 업데이트 |
 | **1.4.0** | Gemini 실시간 생성 제거, 1,800개 명언 풀 기반 1일 1배달, JSDelivr 원격 캐시 추가 |
 | 1.3.10 | i18n 누락 키 보강 + referral_count 인터폴레이션 버그 수정 |

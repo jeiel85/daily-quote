@@ -49,6 +49,7 @@ const LS_TODAY_QUOTE_ID   = 'quote.todayId';        // 오늘 배달된 명언 I
 const LS_LAST_TIME_CHANGE = 'quote.lastTimeChange'; // 마지막 알림 시간 변경 날짜
 const LS_REMOTE_POOL      = 'quote.remotePool';     // 원격에서 받은 풀 (QuoteFile JSON)
 const LS_REMOTE_CHECKED   = 'quote.remoteChecked';  // 마지막 원격 체크 시각 (epoch ms)
+const LS_SCHEDULED_NOTIFS = 'quote.scheduledNotifications'; // 날짜별 예약 알림 명언 ID
 
 const SEEN_CAP = 5000; // 메모리 폭주 방지 — 풀 크기보다 크게 잡되 상한 설정
 
@@ -90,13 +91,17 @@ function POOL(): RawQuote[] {
 
 // ─── 유틸 ──────────────────────────────────────────────────────────────────────
 
-/** 사용자 로컬 타임존 기준 YYYY-MM-DD */
-export function todayKey(): string {
-  const d = new Date();
+/** 임의의 Date 객체 기준 YYYY-MM-DD 포맷 변환 */
+export function formatDate(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+/** 사용자 로컬 타임존 기준 YYYY-MM-DD */
+export function todayKey(): string {
+  return formatDate(new Date());
 }
 
 function readSeen(): string[] {
@@ -119,7 +124,7 @@ function writeSeen(ids: string[]) {
   }
 }
 
-function findById(id: string | null): RawQuote | null {
+export function findById(id: string | null): RawQuote | null {
   if (!id) return null;
   return POOL().find((q) => q.id === id) ?? null;
 }
@@ -133,6 +138,54 @@ function toQuote(raw: RawQuote): Quote {
     theme: raw.theme,
     createdAt: new Date(),
   };
+}
+
+interface ScheduledNotificationQuote {
+  date: string;
+  quoteId: string;
+}
+
+function readScheduledNotificationQuotes(): ScheduledNotificationQuote[] {
+  try {
+    const raw = localStorage.getItem(LS_SCHEDULED_NOTIFS);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item): item is ScheduledNotificationQuote =>
+      typeof item?.date === 'string' && typeof item?.quoteId === 'string'
+    );
+  } catch (e) {
+    console.warn('[quotePool] Failed to parse scheduledNotifications:', e);
+    return [];
+  }
+}
+
+export function saveScheduledNotificationQuotes(items: ScheduledNotificationQuote[]) {
+  try {
+    localStorage.setItem(LS_SCHEDULED_NOTIFS, JSON.stringify(items));
+  } catch (e) {
+    console.warn('[quotePool] scheduledNotifications save failed:', e);
+  }
+}
+
+export function findScheduledNotificationQuoteId(date = todayKey()): string | null {
+  return readScheduledNotificationQuotes().find((item) => item.date === date)?.quoteId ?? null;
+}
+
+export function rememberTodayQuote(quoteId: string, date = todayKey()) {
+  try {
+    localStorage.setItem(LS_LAST_DATE, date);
+    localStorage.setItem(LS_TODAY_QUOTE_ID, quoteId);
+  } catch (e) {
+    console.warn('[quotePool] today cache save failed:', e);
+  }
+}
+
+export function markQuoteSeen(quoteId: string) {
+  const seen = readSeen();
+  const updated = seen.filter((id) => id !== quoteId);
+  updated.push(quoteId);
+  writeSeen(updated);
 }
 
 // ─── 풀 통계 ───────────────────────────────────────────────────────────────────
@@ -248,64 +301,79 @@ export function pickTodayQuote(opts: PickOptions): PickResult | null {
   const today = todayKey();
   const lastDate = localStorage.getItem(LS_LAST_DATE);
   const cachedId = localStorage.getItem(LS_TODAY_QUOTE_ID);
+  const scheduledQuoteId = opts.force ? null : findScheduledNotificationQuoteId(today);
 
-  // 같은 날 이미 배달됨 → 캐시 반환
+  // 같은 날 이미 배달됨 → 캐시 반환. 단, 오늘 예약된 알림 명언이 있으면
+  // 알림 본문과 홈 화면이 어긋나지 않도록 예약 명언을 기준으로 삼는다.
   if (!opts.force && lastDate === today && cachedId) {
+    if (scheduledQuoteId && scheduledQuoteId !== cachedId) {
+      const scheduled = findById(scheduledQuoteId);
+      if (scheduled) {
+        markQuoteSeen(scheduled.id);
+        rememberTodayQuote(scheduled.id, today);
+        console.log(`[quotePool] Replaced cached quote with scheduled notification quote for today: ${scheduled.id}`);
+        return { quote: toQuote(scheduled), isFresh: true };
+      }
+    }
     const cached = findById(cachedId);
     if (cached) return { quote: toQuote(cached), isFresh: false };
   }
 
   const pool = POOL();
+  let picked: RawQuote | null = null;
 
-  // 필터링
-  const themePool = opts.preferredThemes.includes('random') || opts.preferredThemes.length === 0
-    ? null // 전체
-    : new Set(opts.preferredThemes);
-
-  let candidates = pool.filter((q) => q.lang === opts.language);
-  if (themePool) candidates = candidates.filter((q) => themePool.has(q.theme));
-
-  // 풀에 해당 언어/테마 명언이 하나도 없으면 — 같은 언어 전체로 폴백, 그래도 없으면 전체로 폴백
-  if (candidates.length === 0) candidates = pool.filter((q) => q.lang === opts.language);
-  if (candidates.length === 0) candidates = pool;
-  if (candidates.length === 0) {
-    console.warn('[quotePool] 풀이 비어 있다');
-    return null;
+  // 예약된 알림 명언이 있으면 그것을 오늘의 명언으로 확정한다.
+  if (scheduledQuoteId) {
+    const found = findById(scheduledQuoteId);
+    if (found) {
+      picked = found;
+      console.log(`[quotePool] Picked scheduled notification quote for today: ${scheduledQuoteId}`);
+    }
   }
 
-  // 본 ID 제외
-  const seen = readSeen();
-  const seenSet = new Set(seen);
-  const unseen = candidates.filter((q) => !seenSet.has(q.id));
+  // 예약된 명언이 없을 때만 기존 방식대로 랜덤 선택
+  if (!picked) {
+    const themePool = opts.preferredThemes.includes('random') || opts.preferredThemes.length === 0
+      ? null // 전체
+      : new Set(opts.preferredThemes);
 
-  let picked: RawQuote;
-  if (unseen.length > 0) {
-    picked = unseen[Math.floor(Math.random() * unseen.length)];
-  } else {
-    // 모두 본 상태 — 가장 오래된 본 명언 중에서 후보에 들어오는 것 선택
-    const oldestFirst = seen.filter((id) => candidates.some((c) => c.id === id));
-    if (oldestFirst.length > 0) {
-      const oldId = oldestFirst[0];
-      picked = candidates.find((c) => c.id === oldId)!;
+    let candidates = pool.filter((q) => q.lang === opts.language);
+    if (themePool) candidates = candidates.filter((q) => themePool.has(q.theme));
+
+    // 풀에 해당 언어/테마 명언이 하나도 없으면 — 같은 언어 전체로 폴백, 그래도 없으면 전체로 폴백
+    if (candidates.length === 0) candidates = pool.filter((q) => q.lang === opts.language);
+    if (candidates.length === 0) candidates = pool;
+    if (candidates.length === 0) {
+      console.warn('[quotePool] 풀이 비어 있다');
+      return null;
+    }
+
+    // 본 ID 제외
+    const seen = readSeen();
+    const seenSet = new Set(seen);
+    const unseen = candidates.filter((q) => !seenSet.has(q.id));
+
+    if (unseen.length > 0) {
+      picked = unseen[Math.floor(Math.random() * unseen.length)];
     } else {
-      picked = candidates[Math.floor(Math.random() * candidates.length)];
+      // 모두 본 상태 — 가장 오래된 본 명언 중에서 후보에 들어오는 것 선택
+      const oldestFirst = seen.filter((id) => candidates.some((c) => c.id === id));
+      if (oldestFirst.length > 0) {
+        const oldId = oldestFirst[0];
+        picked = candidates.find((c) => c.id === oldId)!;
+      } else {
+        picked = candidates[Math.floor(Math.random() * candidates.length)];
+      }
     }
   }
 
   // seen 갱신: 이미 있으면 빼고 맨 뒤(최신)에 추가
-  const updated = seen.filter((id) => id !== picked.id);
-  updated.push(picked.id);
-  writeSeen(updated);
+  markQuoteSeen(picked!.id);
 
   // 오늘 캐시 저장
-  try {
-    localStorage.setItem(LS_LAST_DATE, today);
-    localStorage.setItem(LS_TODAY_QUOTE_ID, picked.id);
-  } catch (e) {
-    console.warn('[quotePool] today cache save failed:', e);
-  }
+  rememberTodayQuote(picked!.id, today);
 
-  return { quote: toQuote(picked), isFresh: true };
+  return { quote: toQuote(picked!), isFresh: true };
 }
 
 // ─── 알림 예약용 명언 묶음 ────────────────────────────────────────────────────
